@@ -113,5 +113,6 @@ if __name__ == "__main__":
                         run_count+=1
 			outfile.Close()
 	t1=time.time()
-	print(t1-t0)
+	print('\n')
+	print('Generation took %d seconds'%(t1-t0))
 
