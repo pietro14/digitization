@@ -17,18 +17,15 @@ With the following options available:
  
      -I           `<path_to_inputfolder>`         `<path_to_current_directory>+src/`
      -O           `<path_to_outputfolder>`        `<path_to_current_directory>+out/`
-     -F           `<Run_number_file>`               MC_runs.txt
-     -S           `<Set_run_number>`              
+     
 ```
 Given the input folder, the script will run over all the .root files it can find in that location.
-The `MC_runs.txt` file contains a number which the script use to set output names. After the iteration, it will be automatically increased by 1.
 
 EXAMPLE
 --------
 Here an example is provided.
 
-+ First of all, download `ConfigFile.txt` and `MC_runs.txt` and put them in the same directory where your `MC_data_gen.py` is.
-+ Let's say you don't want to specify any output folder, so it will be `out/`.
++ First of all, download the repository with `git clone git@github.com:CYGNUS-RD/digitization.git`
 + You want to specify the folder in which your GEANT4 simulation output is. If you don't have any MC output file, you can download one [here](https://drive.google.com/open?id=1hut-cRycXGwYfO5eJLUXaKKzAwQU_i0p)
 + Run the script with the following command line: `python MC_data_gen.py ConfigFile.txt -I <path_to_input_folder> -F MC_runs.txt`
 
