@@ -6,6 +6,7 @@ import optparse
 import time
 import sys
 import numpy as np
+import root_numpy as rn
 
 ## FUNCTIONS DEFINITION
 
@@ -17,12 +18,14 @@ def smearing(z_hit, y_hit, energyDep_hit, options):
 	return Z, Y
 
 
-def AddBckg(histo, options):
+def AddBckg(options):
+	
+	bckg_array=np.zeros((options.z_pix,options.y_pix))
 	for s in range(0, options.z_pix):
 		for t in range(0, options.y_pix):
-			r=np.random.normal(loc=options.noise_mean, scale=options.noise_sigma)
-                	histo.SetBinContent(s,t,(histo.GetBinContent(s,t)+r))
-	return None 
+			bckg_array[s][t]=np.random.normal(loc=options.noise_mean, scale=options.noise_sigma)
+               
+	return bckg_array 
 
 
 def AddTrack(Tree, hist_list, smear_func):
@@ -31,8 +34,9 @@ def AddTrack(Tree, hist_list, smear_func):
 		for j in range(0, len(S[0])):
 			for t in range(0, len(S[0][j])):
 				hist_list[entry].Fill(S[0][j][t],S[1][j][t])
-				
-	return None
+	signal_array=rn.hist2array(hist_list[entry])				
+	
+	return signal_array
 
 def SaveValues(par, out):
 
@@ -72,15 +76,11 @@ if __name__ == "__main__":
 #### CODE EXECUTION ####
 
         run_count=90000
-
-        print os.listdir(os.getcwd())
-
+	t0=time.time()
         if not os.path.exists(opt.outfolder):
             os.makedirs(opt.outfolder)
             
-        print os.listdir(os.getcwd())
-
-	for infile in os.listdir(opt.infolder):
+        for infile in os.listdir(opt.infolder):
 		
 		if infile.endswith('.root'):		
 
@@ -90,28 +90,28 @@ if __name__ == "__main__":
                		SaveValues(params, outfile) ## SAVE PARAMETER OF THE RUN
 
 			final_imgs=list(); nobckg_imgs=list()
+			
+			for entry in range(0, tree.GetEntries()):
 
-			for num in range(0, tree.GetEntries()-8):
-			
-				final_imgs.append(TH2F()) ## HISTOGRAMS LIST SETUP
-			
-			for entry in range(0, tree.GetEntries()-8):
-		
-				print('number of tracks processed: %d'%(entry+1))
 				tree.GetEntry(entry)
 
-				final_imgs[entry]=TH2F('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5) #smeared track with background
+				final_imgs.append(TH2F('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)) #smeared track with background
 
-				AddTrack(tree, final_imgs, smearing)
+				signal=AddTrack(tree, final_imgs, smearing)
 
 				if opt.bckg:
-					AddBckg(final_imgs[entry], opt)
+					background=AddBckg(opt)
 				
+				total=signal+background
+				final_imgs[entry-1]=rn.array2hist(total, final_imgs[entry-1])
+
 		## WRITE EACH TRACK ON THE ROOT FILE CORRESPONDING TO THE ENERGY
 
+				print('%d images generated'%(entry+1))
 				final_imgs[entry].Write()
 
                         run_count+=1
 			outfile.Close()
-
+	t1=time.time()
+	print(t1-t0)
 
