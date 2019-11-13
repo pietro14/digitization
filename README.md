@@ -20,6 +20,11 @@ With the following options available:
      
 ```
 Given the input folder, the script will run over all the .root files it can find in that location.
+The output file contains also a TDirectoryFile used as a storage for values imported from the `ConfigFile.txt`. They are stored in single-binned histogram, so you can easily access it using
+```Javascript
+histo->cd()
+'histogram_name'->GetBinContent(1)
+```
 
 EXAMPLE
 --------
