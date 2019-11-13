@@ -1,0 +1,17 @@
+{
+
+'diff_param' 		: 0.5,
+
+'z_dim'			: 330,
+'y_dim'			: 330,
+'z_pix'			: 2048,
+'y_pix'			: 2048,
+
+'noise_mean'		: 98.8,
+'noise_sigma'		: 1.2,
+
+'Conversion_Factor'	: 2000/5.9,
+
+'bckg'			: True
+
+}
