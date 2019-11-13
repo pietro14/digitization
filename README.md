@@ -33,7 +33,7 @@ You will find the output in the default `out/` folder.
 
 You can draw the image opening the output in an interactive ROOT session. To make the image similar to the experimental data, we advice to use the following commands
 
-```python
+```Javascript
 gStyle->SetPalette(kGreyScale)
 gStyle->SetOptStat(0)
 ```
