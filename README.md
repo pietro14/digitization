@@ -27,9 +27,17 @@ Here an example is provided.
 
 + First of all, download the repository with `git clone git@github.com:CYGNUS-RD/digitization.git`
 + You want to specify the folder in which your GEANT4 simulation output is. If you don't have any MC output file, you can download one [here](https://drive.google.com/open?id=1hut-cRycXGwYfO5eJLUXaKKzAwQU_i0p)
-+ Run the script with the following command line: `python MC_data_gen.py ConfigFile.txt -I <path_to_input_folder> -F MC_runs.txt`
++ Run the script with the following command line: `python MC_data_gen.py ConfigFile.txt -I <path_to_input_folder>`
 
-The output is in `out/<output_file_name>`, and the number written in `MC_runs.txt` has increased by one.
+You will find the output in the default `out/` folder.
+
+You can draw the image opening the output in an interactive ROOT session. To make the image similar to the experimental data, we advice to use the following commands
+
+```python
+gStyle->SetPalette(kGreyScale)
+gStyle->SetOptStat(0)
+```
+and to set properly the z-axis scale once the TH2F has been written with `COLZ` option.
 
 Work in progress
 ------------
