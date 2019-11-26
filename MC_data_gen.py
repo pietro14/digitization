@@ -41,13 +41,14 @@ def AddTrack(Tree, hist_list, smear_func):
 def SaveValues(par, out):
 
 	out.cd()
-	parameters_directory=TDirectoryFile('parameters_directory', '')
-	parameters_directory.cd()
+	out.mkdir('param_dir')
+	param_dir.cd()
 
 	for k,v in par.items():
 		h=TH1F(k, '', 1, 0, 1)
 		h.SetBinContent(1, v)
 		h.Write()
+	out.cd()
 
 	return None
 
@@ -88,8 +89,9 @@ if __name__ == "__main__":
 			
 			infilename=infile[:-5]	
 			outfile=TFile(opt.outfolder+'/'+infilename+'_Run'+str(run_count)+'.root', 'RECREATE') #OUTPUT NAME
-               		
-			SaveValues(params, outfile) ## SAVE PARAMETER OF THE RUN
+               		outfile.mkdir('event_info')
+	
+			SaveValues(params, outfile) ## SAVE PARAMETERS OF THE RUN
 
 			final_imgs=list();
 			
@@ -101,12 +103,12 @@ if __name__ == "__main__":
 				partID=tree.pdgID_hits[0]
 				E_init=tree.ekin_particle[0]
 
-				outfile.cd() #TOP FOLDER
-				parameters_directory.cd() #GOING DOWN
-				partID_histo=TH1F('partID_'+str(entry),'',1,0,1)
-				E_init_histo=TH1F('E_init_'+str(entry),'',1,0,1)
+				#outfile.cd() #TOP FOLDER
+				event_info.cd() #GOING DOWN
+				partID_histo=TH1F('partID_'+str(entry),'particle ID',1,0,1)
+				E_init_histo=TH1F('E_init_'+str(entry),'Energy [keV]',1,0,1)
 				partID_histo.SetBinContent(1, partID); partID_histo.Write() #SAVING VALUES
-				E_init_histo.SetBinContent(1, E_init); E_init_histo.Write()
+				E_init_histo.SetBinContent(1, E_init*1000); E_init_histo.Write()
 				outfile.cd() #BACK TO TOP
 
 				final_imgs.append(TH2F('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)) #smeared track with background
