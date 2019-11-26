@@ -41,8 +41,8 @@ def AddTrack(Tree, hist_list, smear_func):
 def SaveValues(par, out):
 
 	out.cd()
-	fold=TDirectoryFile('fold', '')
-	fold.cd()
+	parameters_directory=TDirectoryFile('parameters_directory', '')
+	parameters_directory.cd()
 
 	for k,v in par.items():
 		h=TH1F(k, '', 1, 0, 1)
@@ -56,7 +56,7 @@ def SaveValues(par, out):
 
 if __name__ == "__main__":
 
-	#CALL: python img_generator.py ConfigFile.txt -I <<INPUT_FOLDER>> -F MC_img_runs.txt (optional: -S 9xxxx)
+	#CALL: python img_generator.py ConfigFile.txt -I <<INPUT_FOLDER>>
 
 	parser = optparse.OptionParser("usage: %prog [options] arg1 arg2")
 
@@ -76,31 +76,38 @@ if __name__ == "__main__":
         run_count=1
 	t0=time.time()
         
-	if not os.path.exists(opt.outfolder):
+	if not os.path.exists(opt.outfolder): #CREATING OUTPUT FOLDER
             os.makedirs(opt.outfolder)
             
-        for infile in os.listdir(opt.infolder):
+        for infile in os.listdir(opt.infolder): #READING INPUT FOLDER
 		
-		if infile.endswith('.root'):		
+		if infile.endswith('.root'):	#KEEPING .ROOT FILES ONLY
 
 			rootfile=TFile.Open(opt.infolder+infile)
-			tree=rootfile.Get('nTuple')
+			tree=rootfile.Get('nTuple')			#GETTING NTUPLES
 			
-			#FILENAME DEPENDING ON INPUT FILE
-			infilename=infile[:-5]
-	
-			outfile=TFile(opt.outfolder+'/'+infilename+'_Run'+str(run_count)+'.root', 'RECREATE')
+			infilename=infile[:-5]	
+			outfile=TFile(opt.outfolder+'/'+infilename+'_Run'+str(run_count)+'.root', 'RECREATE') #OUTPUT NAME
                		
 			SaveValues(params, outfile) ## SAVE PARAMETER OF THE RUN
 
 			final_imgs=list();
 			
-			for entry in range(0, tree.GetEntries()):
+			#for entry in range(0, tree.GetEntries()): #RUNNING ON ENTRIES
+			for entry in range(0, 4):
 
 				tree.GetEntry(entry)
-				
+
 				partID=tree.pdgID_hits[0]
 				E_init=tree.ekin_particle[0]
+
+				outfile.cd() #TOP FOLDER
+				parameters_directory.cd() #GOING DOWN
+				partID_histo=TH1F('partID_'+str(entry),'',1,0,1)
+				E_init_histo=TH1F('E_init_'+str(entry),'',1,0,1)
+				partID_histo.SetBinContent(1, partID); partID_histo.Write() #SAVING VALUES
+				E_init_histo.SetBinContent(1, E_init); E_init_histo.Write()
+				outfile.cd() #BACK TO TOP
 
 				final_imgs.append(TH2F('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)) #smeared track with background
 					
@@ -110,7 +117,8 @@ if __name__ == "__main__":
 					background=AddBckg(opt)
 				
 				total=signal+background
-				final_imgs[entry-1]=rn.array2hist(total, final_imgs[entry-1])
+
+				final_imgs[entry]=rn.array2hist(total, final_imgs[entry])
 
 				## WRITE EACH TRACK ON THE ROOT FILE CORRESPONDING TO THE ENERGY
 

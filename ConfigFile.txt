@@ -2,8 +2,8 @@
 
 'diff_param' 		: 0.8,            #diffusion parameter [mm]
 
-'z_dim'			: 330,                #first dimension of the detector
-'y_dim'			: 330,                #second dimension of the detector
+'z_dim'			: 350,                #first dimension of the detector
+'y_dim'			: 350,                #second dimension of the detector
 'z_pix'			: 2048,               #number of pixels in the first dimension
 'y_pix'			: 2048,               #number of pixels in the second dimension
 
