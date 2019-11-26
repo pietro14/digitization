@@ -73,8 +73,7 @@ if __name__ == "__main__":
 
 #### CODE EXECUTION ####
 
-        run_count=0
-
+        run_count=1
 	t0=time.time()
         
 	if not os.path.exists(opt.outfolder):
@@ -87,14 +86,14 @@ if __name__ == "__main__":
 			rootfile=TFile.Open(opt.infolder+infile)
 			tree=rootfile.Get('nTuple')
 			
-			#FILENAME DEPENDING ON pdgID
+			#FILENAME DEPENDING ON INPUT FILE
 			infilename=infile[:-5]
 	
 			outfile=TFile(opt.outfolder+'/'+infilename+'_Run'+str(run_count)+'.root', 'RECREATE')
                		
 			SaveValues(params, outfile) ## SAVE PARAMETER OF THE RUN
 
-			final_imgs=list(); #canv=list()
+			final_imgs=list();
 			
 			for entry in range(0, tree.GetEntries()):
 
@@ -104,8 +103,7 @@ if __name__ == "__main__":
 				E_init=tree.ekin_particle[0]
 
 				final_imgs.append(TH2F('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)) #smeared track with background
-				#canv.append(TCanvas("canv_"+str(entry), "", 700, 730))
-				
+					
 				signal=AddTrack(tree, final_imgs, smearing)
 
 				if opt.bckg:
@@ -114,27 +112,16 @@ if __name__ == "__main__":
 				total=signal+background
 				final_imgs[entry-1]=rn.array2hist(total, final_imgs[entry-1])
 
-		## WRITE EACH TRACK ON THE ROOT FILE CORRESPONDING TO THE ENERGY
+				## WRITE EACH TRACK ON THE ROOT FILE CORRESPONDING TO THE ENERGY
 
 				print('%d images generated'%(entry+1))
 				final_imgs[entry].Write()
 			
-				#canv[entry].cd()
-				#final_imgs[entry].GetZaxis().SetRangeUser(95,145)
-				#final_imgs[entry].GetXaxis().SetRangeUser(-10,10)
-				#final_imgs[entry].GetYaxis().SetRangeUser(-10,10)
-				#final_imgs[entry].GetXaxis().SetTitle("z [mm]")
-				#final_imgs[entry].GetYaxis().SetTitle("y [mm]")
-				#gStyle.SetPalette(kGreyScale)
-				#gStyle.SetOptStat(0)
-				#canv[entry].SetRightMargin(0.13)
-				#final_imgs[entry].Draw("colz")
-				#canv[entry].SaveAs(infilename+"_"+str(entry)+".pdf", "pdf")
-				#canv[entry].Close()
-	
 			print('COMPLETED RUN %d'%(run_count))
                         run_count+=1
 			outfile.Close()
+
+
 	t1=time.time()
 	print('\n')
 	print('Generation took %d seconds'%(t1-t0))
