@@ -49,8 +49,6 @@ def SaveValues(par, out):
 		h.SetBinContent(1, v)
 		h.Write()
 
-	#fold=None
-
 	return None
 
 
@@ -75,9 +73,11 @@ if __name__ == "__main__":
 
 #### CODE EXECUTION ####
 
-        run_count=90000
+        run_count=0
+
 	t0=time.time()
-        if not os.path.exists(opt.outfolder):
+        
+	if not os.path.exists(opt.outfolder):
             os.makedirs(opt.outfolder)
             
         for infile in os.listdir(opt.infolder):
@@ -86,17 +86,26 @@ if __name__ == "__main__":
 
 			rootfile=TFile.Open(opt.infolder+infile)
 			tree=rootfile.Get('nTuple')
-			outfile=TFile(opt.outfolder+'/histograms_Run'+str(run_count)+'.root', 'RECREATE')
-               		SaveValues(params, outfile) ## SAVE PARAMETER OF THE RUN
+			
+			#FILENAME DEPENDING ON pdgID
+			infilename=infile[:-5]
+	
+			outfile=TFile(opt.outfolder+'/'+infilename+'_Run'+str(run_count)+'.root', 'RECREATE')
+               		
+			SaveValues(params, outfile) ## SAVE PARAMETER OF THE RUN
 
-			final_imgs=list(); nobckg_imgs=list()
+			final_imgs=list(); #canv=list()
 			
 			for entry in range(0, tree.GetEntries()):
 
 				tree.GetEntry(entry)
+				
+				partID=tree.pdgID_hits[0]
+				E_init=tree.ekin_particle[0]
 
 				final_imgs.append(TH2F('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)) #smeared track with background
-
+				#canv.append(TCanvas("canv_"+str(entry), "", 700, 730))
+				
 				signal=AddTrack(tree, final_imgs, smearing)
 
 				if opt.bckg:
@@ -109,7 +118,21 @@ if __name__ == "__main__":
 
 				print('%d images generated'%(entry+1))
 				final_imgs[entry].Write()
-
+			
+				#canv[entry].cd()
+				#final_imgs[entry].GetZaxis().SetRangeUser(95,145)
+				#final_imgs[entry].GetXaxis().SetRangeUser(-10,10)
+				#final_imgs[entry].GetYaxis().SetRangeUser(-10,10)
+				#final_imgs[entry].GetXaxis().SetTitle("z [mm]")
+				#final_imgs[entry].GetYaxis().SetTitle("y [mm]")
+				#gStyle.SetPalette(kGreyScale)
+				#gStyle.SetOptStat(0)
+				#canv[entry].SetRightMargin(0.13)
+				#final_imgs[entry].Draw("colz")
+				#canv[entry].SaveAs(infilename+"_"+str(entry)+".pdf", "pdf")
+				#canv[entry].Close()
+	
+			print('COMPLETED RUN %d'%(run_count))
                         run_count+=1
 			outfile.Close()
 	t1=time.time()
