@@ -22,7 +22,13 @@ With the following options available:
 Given the input folder, the script will run over all the .root files it can find in that location.
 The output file contains also a TDirectoryFile used as a storage for values imported from the `ConfigFile.txt`. They are stored in single-binned histogram, so you can easily access it using
 ```Javascript
-fold->cd()
+param_dir->cd()
+'histogram_name'->GetBinContent(1)
+```
+Also the type of particle, and its initial energy, for each event are stored in a subfolder. You can access it using
+
+```Javascript
+event_info->cd()
 'histogram_name'->GetBinContent(1)
 ```
 
