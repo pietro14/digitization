@@ -20,10 +20,11 @@ def smearing(z_hit, y_hit, energyDep_hit, options):
 
 def AddBckg(options):
 	
-	bckg_array=np.zeros((options.z_pix,options.y_pix))
-	for s in range(0, options.z_pix):
-		for t in range(0, options.y_pix):
-			bckg_array[s][t]=np.random.normal(loc=options.noise_mean, scale=options.noise_sigma)
+	if options.bckg:
+		bckg_array=np.zeros((options.z_pix,options.y_pix))
+		for s in range(0, options.z_pix):
+			for t in range(0, options.y_pix):
+				bckg_array[s][t]=np.random.normal(loc=options.noise_mean, scale=options.noise_sigma)
                
 	return bckg_array 
 
@@ -52,8 +53,21 @@ def SaveValues(par, out):
 
 	return None
 
+def SaveEventInfo(info_dict, folder, out):
+	
+	out.cd()
+	folder.cd()
 
-## MAIN EXECUTION
+	for k,v in info_dict.items():
+		h=TH1F(k, '', 1,0,1)
+		h.SetBinContent(1,v)
+		h.Write()
+	out.cd()
+	info_dict.clear()
+
+	return None
+
+######################################### MAIN EXECUTION ###########################################
 
 if __name__ == "__main__":
 
@@ -89,40 +103,25 @@ if __name__ == "__main__":
 			
 			infilename=infile[:-5]	
 			outfile=TFile(opt.outfolder+'/'+infilename+'_Run'+str(run_count)+'.root', 'RECREATE') #OUTPUT NAME
-               		outfile.mkdir('event_info')
+       			outfile.mkdir('event_info')
 	
 			SaveValues(params, outfile) ## SAVE PARAMETERS OF THE RUN
 
 			final_imgs=list();
 			
-			#for entry in range(0, tree.GetEntries()): #RUNNING ON ENTRIES
-			for entry in range(0, 4):
-
+			for entry in range(0, tree.GetEntries()): #RUNNING ON ENTRIES
 				tree.GetEntry(entry)
 
-				partID=tree.pdgID_hits[0]
-				E_init=tree.ekin_particle[0]
-
-				#outfile.cd() #TOP FOLDER
-				event_info.cd() #GOING DOWN
-				partID_histo=TH1F('partID_'+str(entry),'particle ID',1,0,1)
-				E_init_histo=TH1F('E_init_'+str(entry),'Energy [keV]',1,0,1)
-				partID_histo.SetBinContent(1, partID); partID_histo.Write() #SAVING VALUES
-				E_init_histo.SetBinContent(1, E_init*1000); E_init_histo.Write()
-				outfile.cd() #BACK TO TOP
+				event_dict={'partID_'+str(entry): tree.pdgID_hits[0], 'E_init_'+str(entry): tree.ekin_particle[0]*1000}
+				SaveEventInfo(event_dict, event_info, outfile)
 
 				final_imgs.append(TH2F('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)) #smeared track with background
 					
 				signal=AddTrack(tree, final_imgs, smearing)
-
-				if opt.bckg:
-					background=AddBckg(opt)
-				
+				background=AddBckg(opt)
 				total=signal+background
 
 				final_imgs[entry]=rn.array2hist(total, final_imgs[entry])
-
-				## WRITE EACH TRACK ON THE ROOT FILE CORRESPONDING TO THE ENERGY
 
 				print('%d images generated'%(entry+1))
 				final_imgs[entry].Write()
