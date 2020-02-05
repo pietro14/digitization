@@ -10,7 +10,7 @@
 'noise_mean'		: 99,           #Electronic noise mean value per pixel
 'noise_sigma'		: 2,            #Electronic noise sigma
 
-'Conversion_Factor'	: 2000/10,   #Number of photoelectrons emitted per keV (iron calibration) [LIME has 60% light wrt LEMON]
+'Conversion_Factor'	: 0.56*3000/6,   #Number of photoelectrons emitted per keV (rescaled from LEMON iron calibration) 
 
 'bckg'			: True                #if 'True' background is added
 
