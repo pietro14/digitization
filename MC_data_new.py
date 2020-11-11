@@ -10,11 +10,15 @@ import root_numpy as rn
 
 ## FUNCTIONS DEFINITION
 
-def smearing(z_hit, y_hit, energyDep_hit, options):
+def smearing(z_hit, y_hit,x_hit, energyDep_hit, options):
     Z=list(); Y=list()
     Z*=0; Y*=0
-    Z.append(np.random.normal(loc=z_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*z_hit), size=int(energyDep_hit*opt.Conversion_Factor)))
-    Y.append(np.random.normal(loc=y_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*z_hit), size=int(energyDep_hit*opt.Conversion_Factor)))
+    #Z.append(np.random.normal(loc=z_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam))), size=int(energyDep_hit*opt.Conversion_Factor)))
+    #Y.append(np.random.normal(loc=y_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam))), size=int(energyDep_hit*opt.Conversion_Factor)))
+    Z.append(np.random.normal(loc=(z_hit+0.5*options.z_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(energyDep_hit*opt.Conversion_Factor)))
+    Y.append(np.random.normal(loc=(y_hit+0.5*options.y_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(energyDep_hit*opt.Conversion_Factor)))
+    
+    #print("distance from gem = "+str(np.abs(x_hit-options.x_cam))+" mm")
     return Z, Y
 
 
@@ -29,19 +33,21 @@ def AddBckg(options):
 
 def AddTrack(Tree, histo, smear_func):
     for i in range(0, Tree.numhits):
-        S=smear_func(Tree.z_hits[i], Tree.y_hits[i], Tree.energyDep_hits[i], opt)
+        S=smear_func(Tree.z_hits[i], Tree.y_hits[i], Tree.x_hits[i], Tree.energyDep_hits[i], opt)
+        #print(S)
         for j in range(0, len(S[0])):
             for t in range(0, len(S[0][j])):
                                 #hist_list[entry].Fill(S[0][j][t],S[1][j][t])
                 histo.Fill(S[0][j][t],S[1][j][t])
+                #print(str(S[0][j][t])+"  "+str(S[1][j][t]))
 
 #    signal_array=rn.hist2array(hist_list[entry])
     signal_array=rn.hist2array(histo)
     return signal_array
 
-def AddTrackGen(numhits, zz_hits, yy_hits, edep_hits, histo, smear_func):
+def AddTrackGen(numhits, zz_hits, yy_hits, xx_hits, edep_hits, histo, smear_func):
     for i in range(0, numhits):
-        S=smear_func(zz_hits[i], yy_hits[i], edep_hits[i], opt)
+        S=smear_func(zz_hits[i], yy_hits[i], xx_hits[i], edep_hits[i], opt)
         for j in range(0, len(S[0])):
             for t in range(0, len(S[0][j])):
                 histo.Fill(S[0][j][t],S[1][j][t])
@@ -137,9 +143,11 @@ if __name__ == "__main__":
                 for entry in range(0, totev): #RUNNING ON ENTRIES
                     tree.GetEntry(entry)
                     event_dict={'partID_'+str(entry): tree.pdgID_hits[0], 'E_init_'+str(entry): tree.ekin_particle[0]*1000}
+                    #print(str(tree.pdgID_hits[0])+" "+str(tree.ekin_particle[0]*1000))
                     SaveEventInfo(event_dict, 'event_info', outfile)
                     #final_imgs.append(TH2F('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)) #smeared track with background
-                    final_image=TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5) #smeared track with background
+                    #final_image=TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5) #smeared track with background
+                    final_image=TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.z_pix, 0, opt.z_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
 
                     #signal=AddTrack(tree, final_imgs, smearing)
                     signal=AddTrack(tree, final_image, smearing)
@@ -191,7 +199,7 @@ if __name__ == "__main__":
                             #final_imgs.append(TH2F('pic_run'+str(run_count)+'_ev'+str(lastentry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)) #smeared track with background
                             final_image=TH2I('pic_run'+str(run_count)+'_ev'+str(lastentry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)#smeared track with background
                            
-                            signal=AddTrackGen(nhits, xvec, zvec, evec, final_image, smearing)
+                            signal=AddTrackGen(nhits, xvec, zvec, yvec, evec, final_image, smearing)
                             background=AddBckg(opt)
                             total=signal+background
                             #final_imgs[lastentry]=rn.array2hist(total, final_imgs[lastentry])
