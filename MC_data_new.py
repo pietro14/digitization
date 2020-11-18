@@ -8,6 +8,10 @@ import sys
 import numpy as np
 import root_numpy as rn
 
+#sys.path.append("../reconstruction")
+import swiftlib as sw
+
+
 ## FUNCTIONS DEFINITION
 
 def smearing(z_hit, y_hit,x_hit, energyDep_hit, options):
@@ -22,12 +26,22 @@ def smearing(z_hit, y_hit,x_hit, energyDep_hit, options):
     return Z, Y
 
 
-def AddBckg(options):
+def AddBckg(options, i):
     bckg_array=np.zeros((options.z_pix,options.y_pix))
     if options.bckg:
-        for s in range(0, options.z_pix):
-            for t in range(0, options.y_pix):
-                bckg_array[s][t]=np.random.normal(loc=options.noise_mean, scale=options.noise_sigma)
+        #for s in range(0, options.z_pix):
+        #    for t in range(0, options.y_pix):
+        #        bckg_array[s][t]=np.random.normal(loc=options.noise_mean, scale=options.noise_sigma)
+        if sw.checkfiletmp(int(options.noiserun)):
+            options.tmpname = "/tmp/histograms_Run%05d.root" % int(options.noiserun)
+        else:
+            print ('Downloading file: ' + sw.swift_root_file(options.tag, int(options.noiserun)))
+            options.tmpname = sw.swift_download_root_file(sw.swift_root_file(options.tag, int(options.noiserun)),int(options.noiserun))
+        tmpfile = TFile.Open(options.tmpname)
+        tmphist = tmpfile.Get("pic_run%05d_ev%d"% (int(options.noiserun),i))
+        bckg_array = rn.hist2array(tmphist) 
+    #print(bckg_array)
+    
     return bckg_array
 
 
@@ -65,9 +79,10 @@ def SaveValues(par, out):
     out.cd('param_dir')
     
     for k,v in par.items():
-        h=TH1F(k, '', 1, 0, 1)
-        h.SetBinContent(1, v)
-        h.Write()
+        if (k!='tag' and k!='noiserun'):
+            h=TH1F(k, '', 1, 0, 1)
+            h.SetBinContent(1, v)
+            h.Write()
     out.cd()
 
     return None
@@ -151,13 +166,14 @@ if __name__ == "__main__":
 
                     #signal=AddTrack(tree, final_imgs, smearing)
                     signal=AddTrack(tree, final_image, smearing)
-                    background=AddBckg(opt)
+                    background=AddBckg(opt,entry+1)
                     total=signal+background
 
                     #final_imgs[entry]=rn.array2hist(total, final_imgs[entry])
                     final_image=rn.array2hist(total, final_image)
                     print('%d images generated'%(entry+1))
                     #final_imgs[entry].Write()
+                    outfile.cd()
                     final_image.Write()            
 
                 print('COMPLETED RUN %d'%(run_count))
@@ -200,7 +216,7 @@ if __name__ == "__main__":
                             final_image=TH2I('pic_run'+str(run_count)+'_ev'+str(lastentry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)#smeared track with background
                            
                             signal=AddTrackGen(nhits, xvec, zvec, yvec, evec, final_image, smearing)
-                            background=AddBckg(opt)
+                            background=AddBckg(opt,entry+1)
                             total=signal+background
                             #final_imgs[lastentry]=rn.array2hist(total, final_imgs[lastentry])
                             final_image=rn.array2hist(total, final_image)
@@ -234,6 +250,8 @@ if __name__ == "__main__":
 
 
     t1=time.time()
+    if opt.donotremove == False:
+        sw.swift_rm_root_file(opt.tmpname)
     print('\n')
     print('Generation took %d seconds'%(t1-t0))
 
