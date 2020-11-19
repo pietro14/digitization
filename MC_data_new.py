@@ -7,6 +7,8 @@ import time
 import sys
 import numpy as np
 import root_numpy as rn
+from scipy.stats import expon
+from scipy.stats import poisson
 
 #sys.path.append("../reconstruction")
 import swiftlib as sw
@@ -19,12 +21,43 @@ def smearing(z_hit, y_hit,x_hit, energyDep_hit, options):
     Z*=0; Y*=0
     #Z.append(np.random.normal(loc=z_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam))), size=int(energyDep_hit*opt.Conversion_Factor)))
     #Y.append(np.random.normal(loc=y_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam))), size=int(energyDep_hit*opt.Conversion_Factor)))
-    Z.append(np.random.normal(loc=(z_hit+0.5*options.z_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(energyDep_hit*opt.Conversion_Factor)))
-    Y.append(np.random.normal(loc=(y_hit+0.5*options.y_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(energyDep_hit*opt.Conversion_Factor)))
-    
+    #Z.append(np.random.normal(loc=(z_hit+0.5*options.z_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(energyDep_hit*opt.Conversion_Factor)))
+    #Y.append(np.random.normal(loc=(y_hit+0.5*options.y_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(energyDep_hit*opt.Conversion_Factor)))
+    nph=Nphotons(energyDep_hit, options)
+    nph2=int(energyDep_hit*opt.Conversion_Factor) #not used, keeping here for back compatibility
+    Z.append(np.random.normal(loc=(z_hit+0.5*options.z_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(nph))) #use nph2 here not to use gain fluctuations
+    Y.append(np.random.normal(loc=(y_hit+0.5*options.y_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(nph))) #use nph2 here not to use gain fluctuations
     #print("distance from gem = "+str(np.abs(x_hit-options.x_cam))+" mm")
     return Z, Y
 
+def Nphotons(energyDep_hit, options):
+
+        # compute the number of ionization (primary) electrons) with a poisson distribution
+        n_ioniz_el_mean=round(energyDep_hit/options.ion_pot)   # mean number of ionization electrons
+        primary=poisson(n_ioniz_el_mean)           # poisson distribution for primary electrons
+        n_ioniz_el=primary.rvs()                   # number of primary electrons
+        # compute the number of secondary electrons (multiplication) considering fluctuations in the first GEM foil only
+        n_el_oneGEM=0                              # number of secondary electrons
+        gain2=expon(loc=0,scale=options.GEM_gain)  # exponential distribution for the GAIN in the first GEM foil
+        #print ('--ioniz el= %d'%(n_ioniz_el))
+        for k in range(0,n_ioniz_el):
+            nsec = gain2.rvs()                     # number of secondary electrons in the first GEM multiplication for each ionization electron
+            #nsec = options.GEM_gain               # use this line and comment out the previous one to eliminate gain fluctuations
+            n_el_oneGEM += nsec
+            #print ('--   loop on ioniz el, k= %d - nsec= %d - nel_onegem= %d'%(k,nsec,n_el_oneGEM))
+
+        n_tot_el=n_el_oneGEM*pow(options.GEM_gain,2)  # total number of secondary electrons considering the gain in the 2nd and 3rd GEM foils
+        nmean_tot_ph=n_tot_el*options.photons_per_el       # mean total number of photons
+        photons=poisson(nmean_tot_ph)                    # poisson distribution for photons
+        n_tot_ph=photons.rvs()                   # number of total photons
+
+        # compute the number of photons hitting the sensor
+        demag=options.y_dim/options.sensor_size  # optical de-magnification (in the config there are y_dim and z_dim. Which to use? In principle they should be the same --> a single number in the config)
+        a=options.camera_aperture               # camera aperture
+        omega=1./math.pow((4*(demag+1)*a),2)   # solid angle ratio
+        n_photons=n_tot_ph*omega               # number of photons on the sensor
+        #print ('  --> Energy= %f - Ion el= %d - tot photons= %d - number of photons= %d'%(energyDep_hit,n_ioniz_el,n_tot_ph,n_photons))
+        return n_photons
 
 def AddBckg(options, i):
     bckg_array=np.zeros((options.z_pix,options.y_pix))
