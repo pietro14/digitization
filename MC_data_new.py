@@ -14,13 +14,15 @@ import swiftlib as sw
 
 ## FUNCTIONS DEFINITION
 
+
 def smearing(z_hit, y_hit,x_hit, energyDep_hit, options):
     Z=list(); Y=list()
     Z*=0; Y*=0
+    ## in Geant4 x is the drift axis
     #Z.append(np.random.normal(loc=z_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam))), size=int(energyDep_hit*opt.Conversion_Factor)))
     #Y.append(np.random.normal(loc=y_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam))), size=int(energyDep_hit*opt.Conversion_Factor)))
     Z.append(np.random.normal(loc=(z_hit+0.5*options.z_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(energyDep_hit*opt.Conversion_Factor)))
-    Y.append(np.random.normal(loc=(y_hit+0.5*options.y_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(energyDep_hit*opt.Conversion_Factor)))
+    Y.append(np.random.normal(loc=(y_hit+0.5*options.y_dim)*options.y_pix/options.y_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(energyDep_hit*opt.Conversion_Factor)))
     
     #print("distance from gem = "+str(np.abs(x_hit-options.x_cam))+" mm")
     return Z, Y
@@ -59,9 +61,10 @@ def AddTrack(Tree, histo, smear_func):
     signal_array=rn.hist2array(histo)
     return signal_array
 
-def AddTrackGen(numhits, zz_hits, yy_hits, xx_hits, edep_hits, histo, smear_func):
+def AddTrackGen(numhits, xx_hits, yy_hits, zz_hits, edep_hits, histo, smear_func):
     for i in range(0, numhits):
-        S=smear_func(zz_hits[i], yy_hits[i], xx_hits[i], edep_hits[i], opt)
+        S=smear_func(xx_hits[i], yy_hits[i], zz_hits[i], edep_hits[i], opt)
+        #print(S)
         for j in range(0, len(S[0])):
             for t in range(0, len(S[0][j])):
                 histo.Fill(S[0][j][t],S[1][j][t])
@@ -79,7 +82,7 @@ def SaveValues(par, out):
     out.cd('param_dir')
     
     for k,v in par.items():
-        if (k!='tag' and k!='noiserun'):
+        if (k!='tag'):
             h=TH1F(k, '', 1, 0, 1)
             h.SetBinContent(1, v)
             h.Write()
@@ -182,7 +185,7 @@ if __name__ == "__main__":
 
         if opt.rootfiles==False:    
                 # code to be used with input txt files from SRIM
-                if infile.endswith('part.txt'):    #KEEPING part.txt FILES ONLY NB: one single file with a specific name for the moment. there are other .txt files in the folder...this has to be fixed...
+                if infile.endswith('.txt'):    #KEEPING part.txt FILES ONLY NB: one single file with a specific name for the moment. there are other .txt files in the folder...this has to be fixed...
 
                     textfile=open(opt.infolder+infile, "r")
             
@@ -213,15 +216,17 @@ if __name__ == "__main__":
                             #event_dict={'partID_'+str(entry): tree.pdgID_hits[0], 'E_init_'+str(entry): tree.ekin_particle[0]*1000}
                             #SaveEventInfo(event_dict, 'event_info', outfile)
                             #final_imgs.append(TH2F('pic_run'+str(run_count)+'_ev'+str(lastentry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)) #smeared track with background
-                            final_image=TH2I('pic_run'+str(run_count)+'_ev'+str(lastentry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)#smeared track with background
+                            #final_image=TH2I('pic_run'+str(run_count)+'_ev'+str(lastentry), '', opt.z_pix, -opt.z_dim*0.5, opt.z_dim*0.5, opt.y_pix, -opt.y_dim*0.5, opt.y_dim*0.5)#smeared track with background
+                            final_image=TH2I('pic_run'+str(run_count)+'_ev'+str(lastentry), '', opt.z_pix, 0., opt.z_pix, opt.y_pix, 0., opt.y_pix)#smeared track with background
                            
-                            signal=AddTrackGen(nhits, xvec, zvec, yvec, evec, final_image, smearing)
+                            signal=AddTrackGen(nhits, xvec, yvec, zvec, evec, final_image, smearing)
                             background=AddBckg(opt,entry+1)
                             total=signal+background
                             #final_imgs[lastentry]=rn.array2hist(total, final_imgs[lastentry])
                             final_image=rn.array2hist(total, final_image)
                             print('%d images generated with new code'%(lastentry))
                             #final_imgs[lastentry].Write()
+                            outfile.cd()
                             final_image.Write()
                             zvec*=0; yvec*=0; xvec*=0; evec*=0 #RESET LISTS
                             lastentry=entry #END OF THE EVENT
@@ -237,7 +242,6 @@ if __name__ == "__main__":
                         x_dist.Fill(float(myvars[2]))
                         evec.append(float(myvars[5]))
                         de_dist.Fill(float(myvars[5]))
-                
                                 
             
                     print('COMPLETED RUN %d'%(run_count))
