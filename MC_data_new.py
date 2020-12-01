@@ -21,13 +21,14 @@ def smearing(z_hit, y_hit,x_hit, energyDep_hit, options):
     Z=list(); Y=list()
     Z*=0; Y*=0
     ## in Geant4 x is the drift axis
-    #Z.append(np.random.normal(loc=z_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam))), size=int(energyDep_hit*opt.Conversion_Factor)))
-    #Y.append(np.random.normal(loc=y_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam))), size=int(energyDep_hit*opt.Conversion_Factor)))
+    #Z.append(np.random.normal(loc=z_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_gem))), size=int(energyDep_hit*opt.Conversion_Factor)))
+    #Y.append(np.random.normal(loc=y_hit, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_gem))), size=int(energyDep_hit*opt.Conversion_Factor)))
     nph=Nphotons(energyDep_hit, options)
     nph2=int(energyDep_hit*opt.Conversion_Factor) #not used, keeping here for back compatibility
-    Z.append(np.random.normal(loc=(z_hit+0.5*options.z_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.z_pix/options.z_dim, size=int(nph))) #use nph2 here not to use gain fluctuations
-    Y.append(np.random.normal(loc=(y_hit+0.5*options.y_dim)*options.y_pix/options.y_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_cam)))*options.y_pix/options.y_dim, size=int(nph))) #use nph2 here not to use gain fluctuations
-    #print("distance from gem = "+str(np.abs(x_hit-options.x_cam))+" mm")
+    Z.append(np.random.normal(loc=(z_hit+0.5*options.z_dim)*options.z_pix/options.z_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_gem))/10.)*options.z_pix/options.z_dim, size=int(nph))) #use nph2 here not to use gain fluctuations
+    Y.append(np.random.normal(loc=(y_hit+0.5*options.y_dim)*options.y_pix/options.y_dim, scale=np.sqrt(options.diff_const_sigma0+options.diff_coeff_B*(np.abs(x_hit-options.x_gem))/10.)*options.y_pix/options.y_dim, size=int(nph))) #use nph2 here not to use gain fluctuations
+
+    #print("distance from gem = "+str(np.abs(x_hit-options.x_gem))+" mm")
     return Z, Y
 
 def Nphotons(energyDep_hit, options):
