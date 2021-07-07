@@ -155,12 +155,15 @@ if __name__ == "__main__":
     for k,v in params.items():
         setattr(opt, k, v)
 
+    ## fit from Fernando Amaro's single GEM gain measurement
     GEM1_gain = 0.0347*np.exp((0.0209)*opt.GEM1_HV)
     GEM2_gain = 0.0347*np.exp((0.0209)*opt.GEM2_HV)
     GEM3_gain = 0.0347*np.exp((0.0209)*opt.GEM3_HV)
     print("GEM1_gain = %d"%GEM1_gain)
     print("GEM2_gain = %d"%GEM2_gain)
     print("GEM3_gain = %d"%GEM3_gain)
+    
+    ## dividing Fernando's to Francesco&Karolina's single GEM gain measurement
     extraction_eff_GEM1 = 0.87319885*np.exp(-0.0020000000*opt.GEM1_HV)
     extraction_eff_GEM2 = 0.87319885*np.exp(-0.0020000000*opt.GEM2_HV)
     extraction_eff_GEM3 = 0.87319885*np.exp(-0.0020000000*opt.GEM3_HV)

@@ -1,45 +1,46 @@
 {
 ##from https://arxiv.org/pdf/2007.00608.pdf
-'diff_const_sigma0T'    : 0.0784,           # diffusion constant [mm]^2
-'diff_coeff_T'          : 0.01232,    #diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
-'diff_const_sigma0L'    : 0.0676,           # diffusion constant [mm]^2
-'diff_coeff_L'          : 0.00978,    #diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
+'diff_const_sigma0T'    : 0.0784,     # diffusion constant [mm]^2
+'diff_coeff_T'          : 0.01232,    # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
+'diff_const_sigma0L'    : 0.0676,     # diffusion constant [mm]^2
+'diff_coeff_L'          : 0.00978,    # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
 
 
-'x_dim'			: 350,      #first dimension of the detector
-'y_dim'			: 350,      #second dimension of the detector
-'x_pix'			: 2304,      #number of pixels in the first dimension
-'y_pix'			: 2304,      #number of pixels in the second dimension
+'x_dim'			: 350,       # first dimension of the detector
+'y_dim'			: 350,       # second dimension of the detector
+'x_pix'			: 2304,      # number of pixels in the first dimension
+'y_pix'			: 2304,      # number of pixels in the second dimension
 
-'z_vox_dim'             : 0.1, #mm
-'zcloud'		: 20, #mm
-'x_vox_min'		: 1100, #px 
-'x_vox_max'		: 1400, #px 
-'y_vox_min'		: 1100, #px 
-'y_vox_max'		: 1400, #px 
+'z_vox_dim'             : 0.1,       # z voxel size in [mm]
+'zcloud'		: 20,        # z dimension of the electron cloud in [mm]
+'x_vox_min'		: 1000,      # x voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
+'x_vox_max'		: 1300,      # x voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
+'y_vox_min'		: 1000,      # y voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
+'y_vox_max'		: 1300,      # y voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
 
 #FIXME
-'z_gem'			: 200.,       #distance [mm]
-'tag'			: 'Data',
-'noiserun'              : 4159, 
+'z_gem'			: 200.,      # distance from GEM [mm]
+'tag'			: 'MC',
+'noiserun'              : 4159,      # pedestal run to add as background
 
-'ion_pot'               : 0.0462,    #ionization potential for He/CF4 60/40 [keV]
-'GEM1_HV'               : 440., 
-'GEM2_HV'               : 440., 
-'GEM3_HV'               : 440., 
+'ion_pot'               : 0.0462,    # ionization potential for He/CF4 60/40 [keV]
+'GEM1_HV'               : 440.,      # HV of GEM1
+'GEM2_HV'               : 440.,      # HV of GEM2
+'GEM3_HV'               : 440.,      # HV of GEM3
 
-'A'                     : 1.,
-'beta'                  : 0.5e-5,
-'absorption_l'          : 1000.,       #mm
+
+'A'                     : 1.,        # free parameter (total scale factor MC/data) 
+'beta'                  : 0.5e-5,    # saturation parameter
+'absorption_l'          : 1000.,     # absorption lenght in [mm]
 'saturation'            : True,     
 
-'photons_per_el'        : 0.07,    #number of photons per electron produced in the avalanche
-'counts_per_photon'     : 2.,      #sensor conversion factor counts/photons
-'sensor_size'           : 14.976,      #sensor dimension [mm] ORCA Fusion
+'photons_per_el'        : 0.07,      # number of photons per electron produced in the avalanche
+'counts_per_photon'     : 2.,        # sensor conversion factor counts/photons
+'sensor_size'           : 14.976,    # sensor dimension [mm] ORCA Fusion
 'camera_aperture'       : 0.95,
 
-'bckg'                  : False,     #if 'True' background is added
-'rootfiles'             : False,     #choose input type: True for G4 root iput, False for SRIM txt files
-'events'                : 1,       #number of events to be processed, -1 = all
-'donotremove'           : True,                    # Remove or not the file from the tmp folder
+'bckg'                  : False,     # if 'True' background is added
+'rootfiles'             : False,     # choose input type: True for G4 root iput, False for SRIM txt files
+'events'                : 1,         # number of events to be processed, -1 = all
+'donotremove'           : True,      # Remove or not the file from the tmp folder
 }
