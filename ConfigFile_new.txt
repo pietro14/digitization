@@ -19,7 +19,7 @@
 'y_vox_max'		: 1300,      # y voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
 
 #FIXME
-'z_gem'			: 200.,      # distance from GEM [mm]
+'z_gem'			: 200.,      # GEM z coordinate [mm] (Note that in Geant4 CYGNO simulation the center of sensitive region is at 255. mm)
 'tag'			: 'MC',
 'noiserun'              : 4159,      # pedestal run to add as background
 
