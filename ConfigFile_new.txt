@@ -1,9 +1,10 @@
 {
 ##from https://arxiv.org/pdf/2007.00608.pdf
-'diff_const_sigma0T'	: 0.0784,	    # diffusion constant [mm]^2
-'diff_coeff_T' 		: 0.0196,    #diffusion parameter [mm/sqrt(cm)]^2 
-'diff_const_sigma0L'	: 0.0676,	    # diffusion constant [mm]^2
-'diff_coeff_L' 		: 0.0144,    #diffusion parameter [mm/sqrt(cm)]^2
+'diff_const_sigma0T'    : 0.0784,           # diffusion constant [mm]^2
+'diff_coeff_T'          : 0.01232,    #diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
+'diff_const_sigma0L'    : 0.0676,           # diffusion constant [mm]^2
+'diff_coeff_L'          : 0.00978,    #diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
+
 
 'x_dim'			: 350,      #first dimension of the detector
 'y_dim'			: 350,      #second dimension of the detector
@@ -11,30 +12,34 @@
 'y_pix'			: 2304,      #number of pixels in the second dimension
 
 'z_vox_dim'             : 0.1, #mm
+'zcloud'		: 20, #mm
+'x_vox_min'		: 1100, #px 
+'x_vox_max'		: 1400, #px 
+'y_vox_min'		: 1100, #px 
+'y_vox_max'		: 1400, #px 
 
 #FIXME
-'z_gem'			: 455.,       #distance from the GEM is (z_gem-255.) [mm]
+'z_gem'			: 200.,       #distance [mm]
 'tag'			: 'Data',
-'noiserun'		: 3944, 
+'noiserun'              : 4159, 
 
 'ion_pot'               : 0.0462,    #ionization potential for He/CF4 60/40 [keV]
-'GEM1_HV'               : 450., 
-'GEM2_HV'               : 450., 
-'GEM3_HV'               : 450., 
-'extraction_eff'        : 0.37,
+'GEM1_HV'               : 440., 
+'GEM2_HV'               : 440., 
+'GEM3_HV'               : 440., 
 
-'A'                     : 1.4705882,
-'beta'                  : 2.5e-5,
-'absorption_l'          : 1000,       #mm
-'saturation'            : 1,     # 1=yes, 0=no
+'A'                     : 1.,
+'beta'                  : 0.5e-5,
+'absorption_l'          : 1000.,       #mm
+'saturation'            : True,     
 
 'photons_per_el'        : 0.07,    #number of photons per electron produced in the avalanche
 'counts_per_photon'     : 2.,      #sensor conversion factor counts/photons
 'sensor_size'           : 14.976,      #sensor dimension [mm] ORCA Fusion
 'camera_aperture'       : 0.95,
 
-'bckg'			: False,     #if 'True' background is added
-'rootfiles'             : True,     #choose input type: True for G4 root iput, False for SRIM txt files
-'events'                : 10,       #number of events to be processed, -1 = all
+'bckg'                  : False,     #if 'True' background is added
+'rootfiles'             : False,     #choose input type: True for G4 root iput, False for SRIM txt files
+'events'                : 1,       #number of events to be processed, -1 = all
 'donotremove'           : True,                    # Remove or not the file from the tmp folder
 }
