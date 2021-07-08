@@ -199,6 +199,7 @@ if __name__ == "__main__":
                 
                 #FIXME
                 z_ini = 255.
+                zbins = int(opt.zcloud/opt.z_vox_dim)
                 rootfile=rt.TFile.Open(opt.infolder+infile)
                 tree=rootfile.Get('nTuple')            #GETTING NTUPLES
             
@@ -319,8 +320,8 @@ if __name__ == "__main__":
                 outtree.Branch("phi_ini", phi_ini, "phi_ini/F")
 
                 final_imgs=list();
-                zvec=list(); yvec=list(); xvec=list(); evec=list()
-                zvec*=0; yvec*=0; xvec*=0; evec*=0
+                zvec=list(); yvec=list(); xvec=list(); evec=list(); phiini=list(); thetaini=list(); eini=list();
+                zvec*=0; yvec*=0; xvec*=0; evec*=0; phiini*=0; thetaini*=0; eini*=0;
                 lastentry=0
                 nhits=0
                 iline=0
@@ -337,6 +338,7 @@ if __name__ == "__main__":
                 final_image=rt.TH2I('pic_run'+str(run_count)+'_ev0', '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
                 
                 array2d_Nph = np.zeros((opt.x_pix,opt.y_pix))
+                
                 
                 for nlines,line in enumerate(content):           #LOOP OVER LINES (HITS)
                     #print(line)
@@ -358,8 +360,14 @@ if __name__ == "__main__":
                     yvec.append(float(myvars[3]))
                     xvec.append(float(myvars[2]))
                     evec.append(float(myvars[6]))
+                    if (len(myvars)>7):
+                        thetaini.append(float(myvars[7]))
+                        phiini.append(float(myvars[8]))
+                        eini.append(float(myvars[9]))
+
+
                     if (np.isnan(x_hit) or np.isnan(y_hit) or np.isnan(z_hit)):
-                        continue ## SKIP LINE
+                        continue ## SKIP LINE WITH NAN VALUES
 
                     # SATURATION SIM
                     if(opt.saturation):
@@ -382,25 +390,45 @@ if __name__ == "__main__":
                                 #print("tot num of sensor counts after GEM3 without saturation: %d"%(opt.A*tot_el_G2*GEM3_gain* omega * opt.photons_per_el * opt.counts_per_photon))
                                 #print("Gain GEM3 = %f   Gain GEM3 saturated = %f"%(GEM3_gain, tot_ph_G3/(tot_el_G2*omega * opt.photons_per_el * opt.counts_per_photon) ))
                 
+                                # add background
                                 background=AddBckg(opt,entry)
                                 total=array2d_Nph+background
-                                final_image=rn.array2hist(total, final_image)
-                                outtree.Fill()
+                                rn.array2hist(total, final_image)
+                                
+                                # write output file
                                 outfile.cd()
                                 final_image.Write()
                                 nphot = final_image.Integral()
-                                zvec*=0; yvec*=0; xvec*=0; evec*=0 #RESET LISTS
-                
-                
-                                histname = "histo_cloud"+str(run_count)+"_pic_"+str(int(entry))
-                                histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
-                                final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
+                                
+                                # fill info_tree
+                                eventnumber[0] = lastentry
+                                #FIXME (particle type NR = 1, could be changed with PDG number)
+                                particle_type[0] = 1
+                                if len(myvars)>7:
+                                    phi_ini[0]    = phiini[entry]
+                                    theta_ini[0]  = thetaini[entry]
+                                    energy_ini[0] = eini[entry]
+                                else:
+                                    phi_ini[0]    = -999  
+                                    theta_ini[0]  = -999 
+                                    energy_ini[0] = -999 
+
+                                outtree.Fill()
+                                
                 
                                 
                                 print("lastentry = %d"%lastentry)
                                 print("tot ion energy = "+str(sumene))
                                 print("ion energy * QF = "+str(sumeneQF))
                                 print("nphot = "+str(nphot))
+               
+                                # create empty histograms for new track
+                                histname = "histo_cloud"+str(run_count)+"_pic_"+str(int(entry))
+                                histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
+                                final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track sig+bckg (if bckg ON)
+                
+                                
+                                zvec*=0; yvec*=0; xvec*=0; evec*=0; phiini*=0; thetaini*=0; eini*=0; #RESET LISTS
                                 sumene = 0.
                                 sumeneQF = 0.
                                 tot_el_G2 = 0
@@ -432,22 +460,44 @@ if __name__ == "__main__":
                                 total=array2d_Nph+background
                                 
                                 rn.array2hist(total,final_image)
-                                outtree.Fill()
+                                nphot = final_image.Integral()
+
+                                # write output file
                                 outfile.cd()
                                 final_image.Write()
                                 nphot = final_image.Integral()
-                                zvec*=0; yvec*=0; xvec*=0; evec*=0 #RESET LISTS
-                 
-                                signal=rt.TH2I('sig_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
-                                final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
+                                
+                                # fill info_tree
+                                eventnumber[0] = lastentry
+                                #FIXME
+                                particle_type[0] = 1
+                                if len(myvars)>7:
+                                    phi_ini[0]    = phiini[entry] 
+                                    theta_ini[0]  = thetaini[entry]
+                                    energy_ini[0] = eini[entry]
+                                else:
+                                    phi_ini[0]    = -999  
+                                    theta_ini[0]  = -999 
+                                    energy_ini[0] = -999 
+
+                                outtree.Fill()
                                 
                                 print("lastentry = %d"%lastentry)
                                 print("tot ion energy = "+str(sumene))
                                 print("ion energy * QF = "+str(sumeneQF))
                                 print("nphot = "+str(nphot))
+                                
+                 
+                                # create empty histograms for new track
+                                signal=rt.TH2I('sig_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
+                                final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
+                                
+                                
+                                zvec*=0; yvec*=0; xvec*=0; evec*=0; phiini*=0; thetaini*=0; eini*=0; #RESET LISTS
                                 sumene = 0.
                                 sumeneQF = 0.
                                 tot_ph_G3 = 0
+                                
                                 lastentry=entry #END OF THE EVENT
                                 if lastentry>=opt.events and opt.events!=-1:
                                     break ##EXIT FROM LOOP OVER GEM3 PHOTONS
