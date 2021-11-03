@@ -200,7 +200,7 @@ if __name__ == "__main__":
                 #FIXME
                 z_ini = 255.
                 zbins = int(opt.zcloud/opt.z_vox_dim)
-                rootfile=rt.TFile.Open(opt.infolder+infile)
+                rootfile=rt.TFile.Open(opt.infolder+"/"+infile)
                 tree=rootfile.Get('nTuple')            #GETTING NTUPLES
             
                 infilename=infile[:-5]    
@@ -305,7 +305,7 @@ if __name__ == "__main__":
             # code to be used with input txt files from SRIM
             if infile.endswith('.txt'):    #KEEPING part.txt FILES ONLY NB: one single file with a specific name for the moment. there are other .txt files in the folder...this has to be fixed...
 
-                textfile=open(opt.infolder+infile, "r")
+                textfile=open(opt.infolder+"/"+infile, "r")
                 print("Opening file : %s" %infile )
 
                 infilename=infile[:-4]    
