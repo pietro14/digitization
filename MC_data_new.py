@@ -179,7 +179,11 @@ if __name__ == "__main__":
 #### CODE EXECUTION ####
     run_count=1
     t0=time.time()
-    
+   
+    # UNCOMMENT THIS LINE IF YOU WANT TO STUDY THE SIMULATION WITH THE SAME STATISTICAL FLUCTUATIONS (SAME SEED): IT IS USEFUL FOR DEBUGGING
+    #np.random.seed(seed=0)
+
+
     eventnumber = np.array([-999], dtype="int")
     particle_type = np.array([-999], dtype="int")
     energy_ini = np.array([-999], dtype="float32")
