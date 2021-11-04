@@ -208,7 +208,9 @@ if __name__ == "__main__":
                 tree=rootfile.Get('nTuple')            #GETTING NTUPLES
             
                 infilename=infile[:-5]    
-                outfile=rt.TFile('%s/histograms_Run%05d.root' % (opt.outfolder,run_count), 'RECREATE') #OUTPUT NAME
+                #outfile=rt.TFile('%s/histograms_Run%05d.root' % (opt.outfolder,run_count), 'RECREATE') #OUTPUT NAME (only run number)
+                #outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO
+                outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V_%s.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV, time.strftime("%Y%m%d-%H%M%S") ), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO AND TIMESTAMP
                 outfile.mkdir('event_info')
                 SaveValues(params, outfile) ## SAVE PARAMETERS OF THE RUN
                 outtree = rt.TTree("info_tree", "info_tree")
