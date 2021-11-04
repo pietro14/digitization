@@ -1,3 +1,7 @@
+# For each parameter you can either set a single value or a list of values. This allows you to easily run the simulation multiple times with differet paramters. 
+# Each list represents the sequence of paramters the simulation will use for each run. Single-value paramters are interpreted as fixed values (the same for each run).
+# Note: you can set as many lists as you want, as long as the length is the same, this can be useful for a HV-scan where 3 paramters (GEM1_HV, GEM2_HV and GEM3_HV) change for each run.
+
 {
 ##from https://arxiv.org/pdf/2007.00608.pdf
 'diff_const_sigma0T'    : 0.0784,     # diffusion constant [mm]^2
@@ -19,14 +23,14 @@
 'y_vox_max'		: 1300,      # y voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
 
 #FIXME
-'z_gem'			: 255.+200., # GEM z coordinate [mm] (Note: in Geant4 CYGNO simulation the center of sensitive region is at 255. mm. So you need to add 255mm)
+'z_gem'			: 255.+200.,      # GEM z coordinate [mm] (Note: in Geant4 CYGNO simulation the center of sensitive region is at 255. mm. So you need to add 255mm)
 'tag'			: 'MC',
 'noiserun'              : 4159,      # pedestal run to add as background
 
 'ion_pot'               : 0.0462,    # ionization potential for He/CF4 60/40 [keV]
-'GEM1_HV'               : 440.,      # HV of GEM1
-'GEM2_HV'               : 440.,      # HV of GEM2
-'GEM3_HV'               : 440.,      # HV of GEM3
+'GEM1_HV'               : [440., 400., 360., 320.],      # HV of GEM1
+'GEM2_HV'               : [440., 400., 360., 320.],      # HV of GEM2
+'GEM3_HV'               : [440., 400., 360., 320.],      # HV of GEM3
 
 
 'A'                     : 1.,        # free parameter (total scale factor MC/data) 

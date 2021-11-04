@@ -1,7 +1,12 @@
 MC_data_gen.py
 ===============
 This simple script applies both the smearing due to diffusion and the electronic noise background to a MC sample track (GEANT4 output).
-To run, the script need to be in the same location where ConfigFile.txt is. This file contains all the parameters that can be manually set as the user prefers.
+To run, the script need to be in the same location where ConfigFile.txt is.
+
+This file contains all the parameters that can be manually set as the user prefers. For each parameter you can either set a single value or a list of values. This allows you to easily run the simulation multiple times with differet paramters.
+Each list represents the sequence of paramters the simulation will use for each run. Single-value paramters are interpreted as fixed values (the same for each run).
+You can have as many lists as you want, as long as the length is the same. This can be useful for a HV-scan where 3 paramters (GEM1_HV, GEM2_HV and GEM3_HV) change for each run.
+
 The output file is a `.root` file containing all the TH2F histograms generated.
 
 USAGE
