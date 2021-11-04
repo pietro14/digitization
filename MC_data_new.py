@@ -181,7 +181,7 @@ if __name__ == "__main__":
     t0=time.time()
    
     # UNCOMMENT THIS LINE IF YOU WANT TO STUDY THE SIMULATION WITH THE SAME STATISTICAL FLUCTUATIONS (SAME SEED): IT IS USEFUL FOR DEBUGGING
-    #np.random.seed(seed=0)
+    np.random.seed(seed=0)
 
 
     eventnumber = np.array([-999], dtype="int")
@@ -244,15 +244,13 @@ if __name__ == "__main__":
                     outtree.Fill()
                     final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
 
-                   
-                    histname = "histo_cloud_pic_"+str(run_count)+"_ev"+str(int(entry)) 
-                    histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
-                    signal=rt.TH2I('sig_pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) 
 
-                    #print("created histo_cloud")
                     
                     ## with saturation
                     if (opt.saturation):
+                        histname = "histo_cloud_pic_"+str(run_count)+"_ev"+str(int(entry)) 
+                        histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
+                        #print("created histo_cloud")
                         tot_el_G2 = 0
                         for ihit in range(0,tree.numhits):
                             #print("Processing hit %d of %d"%(ihit,tree.numhits))
@@ -278,6 +276,7 @@ if __name__ == "__main__":
 
                     ## no saturation
                     else:
+                        signal=rt.TH2I('sig_pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) 
                         tot_ph_G3=0
                         for ihit in range(0,tree.numhits):
                             ## here swapping X with Z beacuse in geant the drift axis is X

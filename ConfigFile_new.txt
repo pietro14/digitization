@@ -19,7 +19,7 @@
 'y_vox_max'		: 1300,      # y voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
 
 #FIXME
-'z_gem'			: 255.+200.,      # GEM z coordinate [mm] (Note: in Geant4 CYGNO simulation the center of sensitive region is at 255. mm. So you need to add 255mm)
+'z_gem'			: 255.+200., # GEM z coordinate [mm] (Note: in Geant4 CYGNO simulation the center of sensitive region is at 255. mm. So you need to add 255mm)
 'tag'			: 'MC',
 'noiserun'              : 4159,      # pedestal run to add as background
 
@@ -32,7 +32,7 @@
 'A'                     : 1.,        # free parameter (total scale factor MC/data) 
 'beta'                  : 0.5e-5,    # saturation parameter
 'absorption_l'          : 1000.,     # absorption lenght in [mm]
-'saturation'            : True,     
+'saturation'            : False,     
 
 'photons_per_el'        : 0.07,      # number of photons per electron produced in the avalanche
 'counts_per_photon'     : 2.,        # sensor conversion factor counts/photons
@@ -40,7 +40,7 @@
 'camera_aperture'       : 0.95,
 
 'bckg'                  : False,     # if 'True' background is added
-'rootfiles'             : False,     # choose input type: True for G4 root iput, False for SRIM txt files
+'rootfiles'             : True,     # choose input type: True for G4 root iput, False for SRIM txt files
 'events'                : 1,         # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
 }
