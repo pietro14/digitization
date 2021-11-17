@@ -50,6 +50,17 @@ gStyle->SetOptStat(0)
 ```
 and to set properly the z-axis scale once the TH2F has been written with `COLZ` option.
 
+Run in batch
+-------------
+To run in batch using PBS queue system you can use the script `submit_digi_batch.py`
+
+Example command:
+
+```
+python scripts/submit_digi_batch.py `pwd` --inputdir /nfs/cygno/CYGNO-MC-data/pbs_outputs/CYGNO_60_40_ER_6_keV/ --outdir /nfs/cygno2/users/$USER/digitization-out/ --tag LIMEsaturation_test --conf ConfigFile_new_saturation.txt
+```
+
+
 Work in progress
 ------------
 + Add an option in `ConfigFile.txt` to choose between different detectors and geometries, in order to simulate other setups without manually changing the parameters
