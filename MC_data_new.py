@@ -82,6 +82,22 @@ def Nph_saturation(histo_cloud,options):
     return Nph_tot, Nph_array
 
 
+    
+def Nph_saturation_array(histo_cloud,options):
+    Nph_array = np.zeros((histo_cloud.shape[0],histo_cloud.shape[1]))
+    Nph_tot = 0
+
+    nel_in=histo_cloud
+    hin=(nel_in  * options.A * GEM3_gain)/(1 + options.beta * GEM3_gain  * nel_in) 
+    hout=np.sum(hin,axis=(2))
+    nmean_ph= hout * omega * options.photons_per_el * options.counts_per_photon     # mean total number of photons
+    poisson_distr = lambda x: poisson(x).rvs()
+    n_ph=poisson_distr(nmean_ph) 
+    Nph_array=n_ph
+    Nph_tot=np.sum(n_ph)
+            
+    return Nph_tot, Nph_array
+
 
 def AddBckg(options, i):
     bckg_array=np.zeros((options.x_pix,options.y_pix))
@@ -205,7 +221,7 @@ if __name__ == "__main__":
         t0=time.time()
        
         # UNCOMMENT THIS LINE IF YOU WANT TO STUDY THE SIMULATION WITH THE SAME STATISTICAL FLUCTUATIONS (SAME SEED): IT IS USEFUL FOR DEBUGGING
-        #np.random.seed(seed=0)
+        np.random.seed(seed=0)
 
 
         eventnumber = np.array([-999], dtype="int")
@@ -289,9 +305,13 @@ if __name__ == "__main__":
                                     tot_el_G2+=1
                                     
                             #tot_el_G2 = histo_cloud.Integral()
-                        
+                            
+                            histo_cloud_array=rn.hist2array(histo_cloud)               # CONVERT ROOT HISTO TO NUMPY ARRAY
+
+
                             # 2d map of photons applying saturation effect
-                            result_GEM3 = Nph_saturation(histo_cloud,opt)
+                            #result_GEM3 = Nph_saturation(histo_cloud,opt)             # SLOW SATURATION WITH 3 FOR LOOP
+                            result_GEM3 = Nph_saturation_array(histo_cloud_array,opt)  # FAST SATURATION WITH NUMPY
                             array2d_Nph = result_GEM3[1]
                             #tot_ph_G3 = result_GEM3[0] 
                             tot_ph_G3 = np.sum(array2d_Nph)

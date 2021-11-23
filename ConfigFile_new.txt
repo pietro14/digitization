@@ -28,15 +28,15 @@
 'noiserun'              : 4159,      # pedestal run to add as background
 
 'ion_pot'               : 0.0462,    # ionization potential for He/CF4 60/40 [keV]
-'GEM1_HV'               : [440., 400., 360., 320.],      # HV of GEM1
-'GEM2_HV'               : [440., 400., 360., 320.],      # HV of GEM2
-'GEM3_HV'               : [440., 400., 360., 320.],      # HV of GEM3
+'GEM1_HV'               : [420.],  # HV of GEM1
+'GEM2_HV'               : [420.],  # HV of GEM2
+'GEM3_HV'               : [420.],  # HV of GEM3
 
 
 'A'                     : 1.,        # free parameter (total scale factor MC/data) 
 'beta'                  : 0.5e-5,    # saturation parameter
 'absorption_l'          : 1000.,     # absorption lenght in [mm]
-'saturation'            : False,     
+'saturation'            : True,     
 
 'photons_per_el'        : 0.07,      # number of photons per electron produced in the avalanche
 'counts_per_photon'     : 2.,        # sensor conversion factor counts/photons
