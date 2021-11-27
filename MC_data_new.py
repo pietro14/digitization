@@ -59,13 +59,13 @@ def ph_smearing2D(x_hit,y_hit,z_hit,energyDep_hit,options):
     return X, Y
 
     
-def Nph_saturation(histo_cloud,options):
+def Nph_saturation(histo_cloud,options,xmin_vox,xmax_vox,ymin_vox,ymax_vox,zmin_vox,zmax_vox):
     Nph_array = np.zeros((histo_cloud.GetNbinsX(),histo_cloud.GetNbinsY()))
     Nph_tot = 0
-    for i in range(options.x_vox_min,options.x_vox_max):
-        for j in range(options.y_vox_min,options.y_vox_max):
+    for i in range(xmin_vox, xmax_vox):
+        for j in range(ymin_vox,ymax_vox):
             hout = 0
-            for k in range(1,histo_cloud.GetNbinsZ()+1):
+            for k in range(zmin_vox,zmax_vox):
                 hin = histo_cloud.GetBinContent(i,j,k)
                 nel_in = hin
                 hout += (nel_in * options.A * GEM3_gain)/(1 + options.beta * GEM3_gain  * nel_in) 
@@ -290,27 +290,45 @@ if __name__ == "__main__":
                         
                         ## with saturation
                         if (opt.saturation):
+
+                            S3D_x=np.array([])
+                            S3D_y=np.array([])
+                            S3D_z=np.array([])
+
                             histname = "histo_cloud_pic_"+str(run_count)+"_ev"+str(int(entry)) 
                             histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
                             #print("created histo_cloud")
-                            tot_el_G2 = 0
                             for ihit in range(0,tree.numhits):
                                 #print("Processing hit %d of %d"%(ihit,tree.numhits))
 
                                 ## here swapping X with Z beacuse in geant the drift axis is X
                                 S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
 
-                                for j in range(0, len(S3D[0])):
-                                    histo_cloud.Fill((0.5*opt.x_dim+S3D[0][j])*opt.x_pix/opt.x_dim, (0.5*opt.y_dim+S3D[1][j])*opt.y_pix/opt.y_dim, (0.5*histo_cloud.GetNbinsZ()*opt.z_vox_dim+S3D[2][j])/opt.z_vox_dim ) 
-                                    tot_el_G2+=1
-                                    
+                                S3D_x=np.append(S3D_x, S3D[0])
+                                S3D_y=np.append(S3D_y, S3D[1])
+                                S3D_z=np.append(S3D_z, S3D[2])
+
+                            # compute max and min for x,y,z. Those values define the smallest volume that contains all electrons
+                            # +/-2 is needed for electrons close to the hedge
+                            xmax=2+int(round(max( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim))) 
+                            xmin=-2+int(round(min( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim)))
+                            ymax=2+int(round(max( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim) ))
+                            ymin=-2+int(round(min( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim))) 
+                            zmax=2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
+                            zmin=-2+int(round(min( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim)))
+
+                            tot_el_G2 = 0
+                            for j in range(0, len(S3D_x)):
+                                histo_cloud.Fill((0.5*opt.x_dim+S3D_x[j])*opt.x_pix/opt.x_dim, (0.5*opt.y_dim+S3D_y[j])*opt.y_pix/opt.y_dim, (0.5*zbins*opt.z_vox_dim+S3D_z[j])/opt.z_vox_dim ) 
+                                tot_el_G2+=1
+                               
                             #tot_el_G2 = histo_cloud.Integral()
                             
                             #histo_cloud_array=rn.hist2array(histo_cloud)               # CONVERT ROOT HISTO TO NUMPY ARRAY
 
 
                             # 2d map of photons applying saturation effect
-                            result_GEM3 = Nph_saturation(histo_cloud,opt)             # SLOW SATURATION WITH 3 FOR LOOP
+                            result_GEM3 = Nph_saturation(histo_cloud,opt,xmin,xmax,ymin,ymax,zmin,zmax)   # SLOW SATURATION WITH 3 FOR LOOP
                             #result_GEM3 = Nph_saturation_array(histo_cloud_array,opt)  # FAST SATURATION WITH NUMPY
                             array2d_Nph = result_GEM3[1]
                             #tot_ph_G3 = result_GEM3[0] 
