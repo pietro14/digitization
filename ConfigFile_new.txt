@@ -17,10 +17,10 @@
 
 'z_vox_dim'             : 0.1,       # z voxel size in [mm]
 'zcloud'		: 20,        # z dimension of the electron cloud in [mm]
-'x_vox_min'		: 1000,      # x voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
-'x_vox_max'		: 1300,      # x voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
-'y_vox_min'		: 1000,      # y voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
-'y_vox_max'		: 1300,      # y voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
+#'x_vox_min'		: 1000,      # x voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
+#'x_vox_max'		: 1300,      # x voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
+#'y_vox_min'		: 1000,      # y voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
+#'y_vox_max'		: 1300,      # y voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
 
 #FIXME
 'z_gem'			: 255.+200.,      # GEM z coordinate [mm] (Note: in Geant4 CYGNO simulation the center of sensitive region is at 255. mm. So you need to add 255mm)
