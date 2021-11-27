@@ -284,7 +284,6 @@ if __name__ == "__main__":
                         phi_ini[0] = np.arctan2( (tree.y_hits[1]-tree.y_hits[0]),(tree.z_hits[1]-tree.z_hits[0]) )
                         theta_ini[0] = np.arccos( (tree.x_hits[1]-tree.x_hits[0]) / np.sqrt( np.power((tree.x_hits[1]-tree.x_hits[0]),2) + np.power((tree.y_hits[1]-tree.y_hits[0]),2) + np.power((tree.z_hits[1]-tree.z_hits[0]),2)) )
                         outtree.Fill()
-                        final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
 
 
                         
@@ -295,9 +294,6 @@ if __name__ == "__main__":
                             S3D_y=np.array([])
                             S3D_z=np.array([])
 
-                            histname = "histo_cloud_pic_"+str(run_count)+"_ev"+str(int(entry)) 
-                            histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
-                            #print("created histo_cloud")
                             for ihit in range(0,tree.numhits):
                                 #print("Processing hit %d of %d"%(ihit,tree.numhits))
 
@@ -317,6 +313,9 @@ if __name__ == "__main__":
                             zmax=2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
                             zmin=-2+int(round(min( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim)))
 
+                            histname = "histo_cloud_pic_"+str(run_count)+"_ev"+str(int(entry)) 
+                            histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
+                            #print("created histo_cloud")
                             tot_el_G2 = 0
                             for j in range(0, len(S3D_x)):
                                 histo_cloud.Fill((0.5*opt.x_dim+S3D_x[j])*opt.x_pix/opt.x_dim, (0.5*opt.y_dim+S3D_y[j])*opt.y_pix/opt.y_dim, (0.5*zbins*opt.z_vox_dim+S3D_z[j])/opt.z_vox_dim ) 
@@ -358,6 +357,7 @@ if __name__ == "__main__":
                         background=AddBckg(opt,entry)
                         total=array2d_Nph+background
 
+                        final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
                         final_image=rn.array2hist(total, final_image)
                         outfile.cd()
                         final_image.Write()            
