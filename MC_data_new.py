@@ -306,12 +306,12 @@ if __name__ == "__main__":
                                     
                             #tot_el_G2 = histo_cloud.Integral()
                             
-                            histo_cloud_array=rn.hist2array(histo_cloud)               # CONVERT ROOT HISTO TO NUMPY ARRAY
+                            #histo_cloud_array=rn.hist2array(histo_cloud)               # CONVERT ROOT HISTO TO NUMPY ARRAY
 
 
                             # 2d map of photons applying saturation effect
-                            #result_GEM3 = Nph_saturation(histo_cloud,opt)             # SLOW SATURATION WITH 3 FOR LOOP
-                            result_GEM3 = Nph_saturation_array(histo_cloud_array,opt)  # FAST SATURATION WITH NUMPY
+                            result_GEM3 = Nph_saturation(histo_cloud,opt)             # SLOW SATURATION WITH 3 FOR LOOP
+                            #result_GEM3 = Nph_saturation_array(histo_cloud_array,opt)  # FAST SATURATION WITH NUMPY
                             array2d_Nph = result_GEM3[1]
                             #tot_ph_G3 = result_GEM3[0] 
                             tot_ph_G3 = np.sum(array2d_Nph)
