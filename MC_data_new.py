@@ -83,7 +83,7 @@ def Nph_saturation(histo_cloud,options,xmin_vox,xmax_vox,ymin_vox,ymax_vox,zmin_
 
 
     
-def Nph_saturation_array(histo_cloud,options):
+def Nph_saturation_vectorized(histo_cloud,options):
     Nph_array = np.zeros((histo_cloud.shape[0],histo_cloud.shape[1]))
     Nph_tot = 0
 
@@ -313,13 +313,17 @@ if __name__ == "__main__":
                             zmax=2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
                             zmin=-2+int(round(min( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim)))
 
-                            histname = "histo_cloud_pic_"+str(run_count)+"_ev"+str(int(entry)) 
-                            histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
+                            #histname = "histo_cloud_pic_"+str(run_count)+"_ev"+str(int(entry)) 
+                            #histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
+                            
+                            histo_cloud_entries=np.array([(0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim ,  (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim  ,  (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim    ]).transpose()
+                            histo_cloud, hedge = np.histogramdd(histo_cloud_entries, bins=(xmax-xmin,ymax-ymin,zmax-zmin), range=([xmin,xmax],[ymin,ymax],[zmin,zmax]), normed=None, weights=None, density=None)
+                            
                             #print("created histo_cloud")
-                            tot_el_G2 = 0
-                            for j in range(0, len(S3D_x)):
-                                histo_cloud.Fill((0.5*opt.x_dim+S3D_x[j])*opt.x_pix/opt.x_dim, (0.5*opt.y_dim+S3D_y[j])*opt.y_pix/opt.y_dim, (0.5*zbins*opt.z_vox_dim+S3D_z[j])/opt.z_vox_dim ) 
-                                tot_el_G2+=1
+                            #tot_el_G2 = 0
+                            #for j in range(0, len(S3D_x)):
+                            #    histo_cloud.Fill((0.5*opt.x_dim+S3D_x[j])*opt.x_pix/opt.x_dim, (0.5*opt.y_dim+S3D_y[j])*opt.y_pix/opt.y_dim, (0.5*zbins*opt.z_vox_dim+S3D_z[j])/opt.z_vox_dim ) 
+                            #    tot_el_G2+=1
                                
                             #tot_el_G2 = histo_cloud.Integral()
                             
@@ -327,12 +331,15 @@ if __name__ == "__main__":
 
 
                             # 2d map of photons applying saturation effect
-                            result_GEM3 = Nph_saturation(histo_cloud,opt,xmin,xmax,ymin,ymax,zmin,zmax)   # SLOW SATURATION WITH 3 FOR LOOP
-                            #result_GEM3 = Nph_saturation_array(histo_cloud_array,opt)  # FAST SATURATION WITH NUMPY
+                            #result_GEM3 = Nph_saturation(histo_cloud,opt,xmin,xmax,ymin,ymax,zmin,zmax)   # SLOW SATURATION WITH 3 FOR LOOP
+                            result_GEM3 = Nph_saturation_vectorized(histo_cloud,opt)                            # FAST SATURATION WITH NUMPY
                             array2d_Nph = result_GEM3[1]
                             #tot_ph_G3 = result_GEM3[0] 
                             tot_ph_G3 = np.sum(array2d_Nph)
-
+                            
+                            # add empty block of pixels around the histo_cloud and get the dimensions of the final image
+                            array2d_Nph=np.pad(array2d_Nph, ((xmin, opt.x_pix-xmax), (ymin, opt.y_pix-ymax)), 'constant', constant_values=0)
+                               
                             #print("tot num of sensor counts after GEM3 including saturation: %d"%(tot_ph_G3))
                             #print("tot num of sensor counts after GEM3 without saturation: %d"%(opt.A*tot_el_G2*GEM3_gain* omega * opt.photons_per_el * opt.counts_per_photon))
                             #print("Gain GEM3 = %f   Gain GEM3 saturated = %f"%(GEM3_gain, tot_ph_G3/(opt.A * tot_el_G2*omega * opt.photons_per_el * opt.counts_per_photon) ))   
