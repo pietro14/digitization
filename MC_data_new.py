@@ -171,6 +171,7 @@ if __name__ == "__main__":
             params_with_list[k]=v
    
     # NOW SCAN OVER MULTIPLE PARAMETERS
+    run_count=1
     for scan_idx in range(0,scan_length):
         params={}
         for k, v in params_with_list.items():
@@ -201,7 +202,6 @@ if __name__ == "__main__":
         #print(omega)
 
     #### CODE EXECUTION ####
-        run_count=1
         t0=time.time()
        
         # UNCOMMENT THIS LINE IF YOU WANT TO STUDY THE SIMULATION WITH THE SAME STATISTICAL FLUCTUATIONS (SAME SEED): IT IS USEFUL FOR DEBUGGING
