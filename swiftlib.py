@@ -3,7 +3,7 @@
 def swift_root_file(tag, run):
     sel = rootlocation(tag,run)    
     
-    BASE_URL  = "https://swift.cloud.infn.it:8080/v1/AUTH_1e60fe39fba04701aa5ffc0b97871ed8/Cygnus/"
+    BASE_URL  = "https://s3.cloud.infn.it/v1/AUTH_2ebf769785574195bde2ff418deac08a/cygnus/"
     file_root = (sel+'/histograms_Run%05d.root' % run)
     return BASE_URL+file_root
 
@@ -33,7 +33,7 @@ def rootlocation(tag,run):
     if tag == 'Data':
         if (run>=936) and (run<=1601):
             sel = 'Data/LTD/Data_Camera/ROOT'
-        elif (run>=1632) and (run<=3865):
+        elif ((run>=1632) and (run<=3865)) or (run==4159):
             sel = 'Data/LAB'
         else:
             print("WARNING: Data taken with another DAQ or not yet uploaded to the cloud")

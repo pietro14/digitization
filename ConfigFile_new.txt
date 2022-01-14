@@ -1,3 +1,7 @@
+# For each parameter you can either set a single value or a list of values. This allows you to easily run the simulation multiple times with differet paramters. 
+# Each list represents the sequence of paramters the simulation will use for each run. Single-value paramters are interpreted as fixed values (the same for each run).
+# Note: you can set as many lists as you want, as long as the length is the same, this can be useful for a HV-scan where 3 paramters (GEM1_HV, GEM2_HV and GEM3_HV) change for each run.
+
 {
 ##from https://arxiv.org/pdf/2007.00608.pdf
 'diff_const_sigma0T'    : 0.0784,     # diffusion constant [mm]^2
@@ -13,20 +17,20 @@
 
 'z_vox_dim'             : 0.1,       # z voxel size in [mm]
 'zcloud'		: 20,        # z dimension of the electron cloud in [mm]
-'x_vox_min'		: 1000,      # x voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
-'x_vox_max'		: 1300,      # x voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
-'y_vox_min'		: 1000,      # y voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
-'y_vox_max'		: 1300,      # y voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
+#'x_vox_min'		: 1000,      # x voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
+#'x_vox_max'		: 1300,      # x voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
+#'y_vox_min'		: 1000,      # y voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
+#'y_vox_max'		: 1300,      # y voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
 
 #FIXME
-'z_gem'			: 200.,      # GEM z coordinate [mm] (Note that in Geant4 CYGNO simulation the center of sensitive region is at 255. mm)
+'z_gem'			: 255.+200.,      # GEM z coordinate [mm] (Note: in Geant4 CYGNO simulation the center of sensitive region is at 255. mm. So you need to add 255mm)
 'tag'			: 'MC',
 'noiserun'              : 4159,      # pedestal run to add as background
 
 'ion_pot'               : 0.0462,    # ionization potential for He/CF4 60/40 [keV]
-'GEM1_HV'               : 440.,      # HV of GEM1
-'GEM2_HV'               : 440.,      # HV of GEM2
-'GEM3_HV'               : 440.,      # HV of GEM3
+'GEM1_HV'               : [420.],  # HV of GEM1
+'GEM2_HV'               : [420.],  # HV of GEM2
+'GEM3_HV'               : [420.],  # HV of GEM3
 
 
 'A'                     : 1.,        # free parameter (total scale factor MC/data) 
@@ -40,7 +44,7 @@
 'camera_aperture'       : 0.95,
 
 'bckg'                  : False,     # if 'True' background is added
-'rootfiles'             : False,     # choose input type: True for G4 root iput, False for SRIM txt files
+'rootfiles'             : True,     # choose input type: True for G4 root iput, False for SRIM txt files
 'events'                : 1,         # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
 }
