@@ -249,8 +249,8 @@ if __name__ == "__main__":
                     tree=rootfile.Get('nTuple')            #GETTING NTUPLES
                 
                     infilename=infile[:-5]    
-                    outfile=rt.TFile('%s/histograms_Run%05d.root' % (opt.outfolder,run_count), 'RECREATE') #OUTPUT NAME (only run number)
-                    #outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO
+                    #outfile=rt.TFile('%s/histograms_Run%05d.root' % (opt.outfolder,run_count), 'RECREATE') #OUTPUT NAME (only run number)
+                    outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO
                     #outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V_%s.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV, time.strftime("%Y%m%d-%H%M%S") ), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO AND TIMESTAMP
                     outfile.mkdir('event_info')
                     SaveValues(params, outfile) ## SAVE PARAMETERS OF THE RUN
@@ -301,7 +301,10 @@ if __name__ == "__main__":
                                 #print("Processing hit %d of %d"%(ihit,tree.numhits))
 
                                 ## here swapping X with Z beacuse in geant the drift axis is X
-                                S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                if (opt.NR == True):
+                                    S3D = cloud_smearing3D(tree.x_hits[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                else:
+                                    S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
 
                                 S3D_x=np.append(S3D_x, S3D[0])
                                 S3D_y=np.append(S3D_y, S3D[1])
@@ -353,7 +356,10 @@ if __name__ == "__main__":
                             tot_ph_G3=0
                             for ihit in range(0,tree.numhits):
                                 ## here swapping X with Z beacuse in geant the drift axis is X
-                                S2D = ph_smearing2D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                if (opt.NR==True):
+                                    S2D = ph_smearing2D(tree.x_hits[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                else:
+                                    S2D = ph_smearing2D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
                                 
                                 for t in range(0, len(S2D[0])):
                                     tot_ph_G3+=1
