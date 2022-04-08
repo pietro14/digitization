@@ -105,7 +105,8 @@ def AddBckg(options, i):
         if sw.checkfiletmp(int(options.noiserun)):
             #options.tmpname = "/tmp/histograms_Run%05d.root" % int(options.noiserun)
             #options.tmpname = "/mnt/ssdcache/histograms_Run%05d.root" % int(options.noiserun)
-            options.tmpname = "/nfs/cygno/users/dimperig/CYGNO/CYGNO-tmp/histograms_Run%05d.root" % int(options.noiserun)
+            #options.tmpname = "/nfs/cygno/users/dimperig/CYGNO/CYGNO-tmp/histograms_Run%05d.root" % int(options.noiserun)
+            options.tmpname = "../data/histograms_Run%05d.root" % int(options.noiserun)
             #FIXME
             #options.tmpname = "/nfs/cygno/users/dimperig/CYGNO/CYGNO-tmp/histograms_Run%05d_cropped.root" % int(options.noiserun)
         else:
@@ -169,6 +170,7 @@ if __name__ == "__main__":
     params_with_list = eval(config.read())         #READ CONFIG FILE
 
 
+
     # PREPARE A LOOP OVER THE CONFIG PARAMETERS. SINGLE VALUES ARE INTERPRETED AS FIXED VALUES. 
     scan_par_list=[]
     scan_length=1       
@@ -195,6 +197,7 @@ if __name__ == "__main__":
 
         for k,v in params.items():
             setattr(opt, k, v)
+
 
         ## fit from Fernando Amaro's single GEM gain measurement
         GEM1_gain = 0.0347*np.exp((0.0209)*opt.GEM1_HV)
@@ -237,8 +240,6 @@ if __name__ == "__main__":
                 
         for infile in os.listdir(opt.infolder): #READING INPUT FOLDER
                 
-            if opt.rootfiles==True:
-                    # code to be used with input root files from Geant
                 if infile.endswith('.root'):    #KEEPING .ROOT FILES ONLY
                     
                     #FIXME
@@ -249,8 +250,8 @@ if __name__ == "__main__":
                 
                     infilename=infile[:-5]    
                     #outfile=rt.TFile('%s/histograms_Run%05d.root' % (opt.outfolder,run_count), 'RECREATE') #OUTPUT NAME (only run number)
-                    #outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO
-                    outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V_%s.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV, time.strftime("%Y%m%d-%H%M%S") ), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO AND TIMESTAMP
+                    outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO
+                    #outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V_%s.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV, time.strftime("%Y%m%d-%H%M%S") ), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO AND TIMESTAMP
                     outfile.mkdir('event_info')
                     SaveValues(params, outfile) ## SAVE PARAMETERS OF THE RUN
                     outtree = rt.TTree("info_tree", "info_tree")
@@ -277,16 +278,18 @@ if __name__ == "__main__":
                         tree.GetEntry(entry)
                         eventnumber[0] = tree.eventnumber
                         #FIXME
-                        particle_type[0] = 0
-                        energy_ini[0] = tree.ekin_particle[0]*1000
+                        if (opt.NR==True): 
+                            energy_ini[0] = tree.ekin_particle
+                            particle_type[0] = tree.particle_type
+                        else: 
+                            energy_ini[0] = tree.ekin_particle[0]*1000
+                            particle_type[0] = 0
                         phi_ini[0] = -999.
                         theta_ini[0] = -999.
                         phi_ini[0] = np.arctan2( (tree.y_hits[1]-tree.y_hits[0]),(tree.z_hits[1]-tree.z_hits[0]) )
                         theta_ini[0] = np.arccos( (tree.x_hits[1]-tree.x_hits[0]) / np.sqrt( np.power((tree.x_hits[1]-tree.x_hits[0]),2) + np.power((tree.y_hits[1]-tree.y_hits[0]),2) + np.power((tree.z_hits[1]-tree.z_hits[0]),2)) )
                         outtree.Fill()
-
-
-                        
+  
                         ## with saturation
                         if (opt.saturation):
 
@@ -298,7 +301,10 @@ if __name__ == "__main__":
                                 #print("Processing hit %d of %d"%(ihit,tree.numhits))
 
                                 ## here swapping X with Z beacuse in geant the drift axis is X
-                                S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                if (opt.NR == True):
+                                    S3D = cloud_smearing3D(tree.x_hits[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                else:
+                                    S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
 
                                 S3D_x=np.append(S3D_x, S3D[0])
                                 S3D_y=np.append(S3D_y, S3D[1])
@@ -350,7 +356,10 @@ if __name__ == "__main__":
                             tot_ph_G3=0
                             for ihit in range(0,tree.numhits):
                                 ## here swapping X with Z beacuse in geant the drift axis is X
-                                S2D = ph_smearing2D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                if (opt.NR==True):
+                                    S2D = ph_smearing2D(tree.x_hits[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                else:
+                                    S2D = ph_smearing2D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
                                 
                                 for t in range(0, len(S2D[0])):
                                     tot_ph_G3+=1
@@ -375,6 +384,12 @@ if __name__ == "__main__":
                     run_count+=1
                     #outfile.Close()
 
+        t1=time.time()
+        if opt.donotremove == False:
+            sw.swift_rm_root_file(opt.tmpname)
+        print('\n')
+        print('Generation took %d seconds'%(t1-t0))
+'''
             if opt.rootfiles==False:    
                 # code to be used with input txt files from SRIM
                 if infile.endswith('.txt'):    #KEEPING part.txt FILES ONLY NB: one single file with a specific name for the moment. there are other .txt files in the folder...this has to be fixed...
@@ -594,11 +609,4 @@ if __name__ == "__main__":
                     outfile.cd('event_info') 
                     outtree.Write()
                     #outfile.Close()
-
-
-        t1=time.time()
-        if opt.donotremove == False:
-            sw.swift_rm_root_file(opt.tmpname)
-        print('\n')
-        print('Generation took %d seconds'%(t1-t0))
-
+'''
