@@ -58,28 +58,29 @@ def ph_smearing2D(x_hit,y_hit,z_hit,energyDep_hit,options):
     Y=(np.random.normal(loc=(y_hit), scale=np.sqrt(options.diff_const_sigma0T+options.diff_coeff_T*(np.abs(z_hit-options.z_gem))/10.), size=int(nph)))
     return X, Y
 
-    
-def Nph_saturation(histo_cloud,options,xmin_vox,xmax_vox,ymin_vox,ymax_vox,zmin_vox,zmax_vox):
-    Nph_array = np.zeros((histo_cloud.GetNbinsX(),histo_cloud.GetNbinsY()))
-    Nph_tot = 0
-    for i in range(xmin_vox, xmax_vox):
-        for j in range(ymin_vox,ymax_vox):
-            hout = 0
-            for k in range(zmin_vox,zmax_vox):
-                hin = histo_cloud.GetBinContent(i,j,k)
-                nel_in = hin
-                hout += (nel_in * options.A * GEM3_gain)/(1 + options.beta * GEM3_gain  * nel_in) 
-                
-
-            nmean_ph= hout * omega * options.photons_per_el * options.counts_per_photon     # mean total number of photons
-            photons=poisson(nmean_ph)                    # poisson distribution for photons
-            n_ph=photons.rvs()  
-            Nph_array[i-1][j-1] = n_ph
-            Nph_tot += Nph_array[i-1][j-1]
-            #if hout>0:
-            #    print("number final electrons per voxel: %f"%hout)
-            
-    return Nph_tot, Nph_array
+# Nph_saturation() is not needed anymore: now we use Nph_saturation_vectorized() 
+#
+#def Nph_saturation(histo_cloud,options,xmin_vox,xmax_vox,ymin_vox,ymax_vox,zmin_vox,zmax_vox):
+#    Nph_array = np.zeros((histo_cloud.GetNbinsX(),histo_cloud.GetNbinsY()))
+#    Nph_tot = 0
+#    for i in range(xmin_vox, xmax_vox):
+#        for j in range(ymin_vox,ymax_vox):
+#            hout = 0
+#            for k in range(zmin_vox,zmax_vox):
+#                hin = histo_cloud.GetBinContent(i,j,k)
+#                nel_in = hin
+#                hout += (nel_in * options.A * GEM3_gain)/(1 + options.beta * GEM3_gain  * nel_in) 
+#                
+#
+#            nmean_ph= hout * omega * options.photons_per_el * options.counts_per_photon     # mean total number of photons
+#            photons=poisson(nmean_ph)                    # poisson distribution for photons
+#            n_ph=photons.rvs()  
+#            Nph_array[i-1][j-1] = n_ph
+#            Nph_tot += Nph_array[i-1][j-1]
+#            #if hout>0:
+#            #    print("number final electrons per voxel: %f"%hout)
+#            
+#    return Nph_tot, Nph_array
 
 
     
@@ -204,7 +205,6 @@ if __name__ == "__main__":
     theta_ini = np.array([-999], dtype="float32")
     phi_ini = np.array([-999], dtype="float32")
 
-    z_ini = 0
 
     if not os.path.exists(opt.outfolder): #CREATING OUTPUT FOLDER
         os.makedirs(opt.outfolder)
@@ -281,35 +281,28 @@ if __name__ == "__main__":
 
                         # compute max and min for x,y,z. Those values define the smallest volume that contains all electrons
                         # +/-2 is needed for electrons close to the hedge
-                        xmax=2+int(round(max( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim))) 
+                        xmax=+2+int(round(max( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim))) 
                         xmin=-2+int(round(min( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim)))
-                        ymax=2+int(round(max( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim) ))
+                        ymax=+2+int(round(max( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim) ))
                         ymin=-2+int(round(min( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim))) 
-                        zmax=2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
+                        zmax=+2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
                         zmin=-2+int(round(min( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim)))
 
-                        #histname = "histo_cloud_pic_"+str(run_count)+"_ev"+str(int(entry)) 
-                        #histo_cloud = rt.TH3I(histname,"",opt.x_pix,0,opt.x_pix-1,opt.y_pix,0,opt.y_pix-1,zbins,0,zbins)
-                        
-                        histo_cloud_entries=np.array([(0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim ,  (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim  ,  (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim    ]).transpose()
-                        histo_cloud, hedge = np.histogramdd(histo_cloud_entries, bins=(xmax-xmin,ymax-ymin,zmax-zmin), range=([xmin,xmax],[ymin,ymax],[zmin,zmax]), normed=None, weights=None, density=None)
-                        
-                        #print("created histo_cloud")
-                        #tot_el_G2 = 0
-                        #for j in range(0, len(S3D_x)):
-                        #    histo_cloud.Fill((0.5*opt.x_dim+S3D_x[j])*opt.x_pix/opt.x_dim, (0.5*opt.y_dim+S3D_y[j])*opt.y_pix/opt.y_dim, (0.5*zbins*opt.z_vox_dim+S3D_z[j])/opt.z_vox_dim ) 
-                        #    tot_el_G2+=1
-                           
-                        #tot_el_G2 = histo_cloud.Integral()
-                        
-                        #histo_cloud_array=rn.hist2array(histo_cloud)               # CONVERT ROOT HISTO TO NUMPY ARRAY
+                        # numpy histo is faster than ROOT histo
+                        histo_cloud_entries=np.array(
+                                [(0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim ,
+                                 (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim , 
+                                 (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim]).transpose()
 
+                        histo_cloud, hedge = np.histogramdd(
+                                histo_cloud_entries,
+                                bins=(xmax-xmin,ymax-ymin,zmax-zmin),
+                                range=([xmin,xmax],[ymin,ymax],[zmin,zmax]),
+                                normed=None, weights=None, density=None)
 
-                        # 2d map of photons applying saturation effect
-                        #result_GEM3 = Nph_saturation(histo_cloud,opt,xmin,xmax,ymin,ymax,zmin,zmax)   # SLOW SATURATION WITH 3 FOR LOOP
-                        result_GEM3 = Nph_saturation_vectorized(histo_cloud,opt)                            # FAST SATURATION WITH NUMPY
+                        # apply saturation vectorized function
+                        result_GEM3 = Nph_saturation_vectorized(histo_cloud,opt)   
                         array2d_Nph = result_GEM3[1]
-                        #tot_ph_G3 = result_GEM3[0] 
                         tot_ph_G3 = np.sum(array2d_Nph)
                         
                         # add empty block of pixels around the histo_cloud and get the dimensions of the final image

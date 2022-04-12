@@ -34,7 +34,7 @@
 'camera_aperture'       : 0.95,
 
 'bckg'                  : True,      # if 'True' background is added
-'NR'                    : True,      # 'True' for NR digitization, 'False' for ER   
+'NR'                    : False,      # 'True' for NR digitization, 'False' for ER   
 'events'                : 5,         # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
 }
