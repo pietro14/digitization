@@ -1,14 +1,9 @@
-# For each parameter you can either set a single value or a list of values. This allows you to easily run the simulation multiple times with differet paramters. 
-# Each list represents the sequence of paramters the simulation will use for each run. Single-value paramters are interpreted as fixed values (the same for each run).
-# Note: you can set as many lists as you want, as long as the length is the same, this can be useful for a HV-scan where 3 paramters (GEM1_HV, GEM2_HV and GEM3_HV) change for each run.
-
 {
 ##from https://arxiv.org/pdf/2007.00608.pdf
-'diff_const_sigma0T'    : 0.0784,     # diffusion constant [mm]^2
+'diff_const_sigma0T'    : 0.1225,     # diffusion constant [mm]^2
 'diff_coeff_T'          : 0.01232,    # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
 'diff_const_sigma0L'    : 0.0676,     # diffusion constant [mm]^2
 'diff_coeff_L'          : 0.00978,    # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
-
 
 'x_dim'			: 350,       # first dimension of the detector
 'y_dim'			: 350,       # second dimension of the detector
@@ -17,34 +12,29 @@
 
 'z_vox_dim'             : 0.1,       # z voxel size in [mm]
 'zcloud'		: 20,        # z dimension of the electron cloud in [mm]
-#'x_vox_min'		: 1000,      # x voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
-#'x_vox_max'		: 1300,      # x voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
-#'y_vox_min'		: 1000,      # y voxel min of the electron cloud (voxels in the GEM plane correspond to pixels)
-#'y_vox_max'		: 1300,      # y voxel max of the electron cloud (voxels in the GEM plane correspond to pixels)
 
 #FIXME
-'z_gem'			: 255.+200.,      # GEM z coordinate [mm] (Note: in Geant4 CYGNO simulation the center of sensitive region is at 255. mm. So you need to add 255mm)
-'tag'			: 'MC',
+'z_gem'			: 255.+250., # GEM z coordinate [mm] Always add 255mm since in Geant4 center of sensitive region is at 255mm
+'tag'			: 'Data',    # Use 'Data' to download pedestal run with swiftlib.py
 'noiserun'              : 4159,      # pedestal run to add as background
 
 'ion_pot'               : 0.0462,    # ionization potential for He/CF4 60/40 [keV]
-'GEM1_HV'               : [420.],  # HV of GEM1
-'GEM2_HV'               : [420.],  # HV of GEM2
-'GEM3_HV'               : [420.],  # HV of GEM3
-
+'GEM1_HV'               : 440.,      # HV of GEM1
+'GEM2_HV'               : 440.,      # HV of GEM2
+'GEM3_HV'               : 440.,      # HV of GEM3
 
 'A'                     : 1.,        # free parameter (total scale factor MC/data) 
-'beta'                  : 0.5e-5,    # saturation parameter
+'beta'                  : 1.0e-5,    # saturation parameter
 'absorption_l'          : 1000.,     # absorption lenght in [mm]
-'saturation'            : True,     
+'saturation'            : True,      # if 'True' saturation effect is applied on GEM3    
 
 'photons_per_el'        : 0.07,      # number of photons per electron produced in the avalanche
 'counts_per_photon'     : 2.,        # sensor conversion factor counts/photons
 'sensor_size'           : 14.976,    # sensor dimension [mm] ORCA Fusion
 'camera_aperture'       : 0.95,
 
-'bckg'                  : False,     # if 'True' background is added
-'rootfiles'             : True,     # choose input type: True for G4 root iput, False for SRIM txt files
-'events'                : 1,         # number of events to be processed, -1 = all
+'bckg'                  : True,     # if 'True' background is added
+'NR'                    : False,     # 'True' for NR digitization, 'False' for ER   
+'events'                : 10,        # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
 }

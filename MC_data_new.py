@@ -103,10 +103,9 @@ def AddBckg(options, i):
     bckg_array=np.zeros((options.x_pix,options.y_pix))
     if options.bckg:
         if sw.checkfiletmp(int(options.noiserun)):
-            #options.tmpname = "/tmp/histograms_Run%05d.root" % int(options.noiserun)
+            options.tmpname = "/tmp/histograms_Run%05d.root" % int(options.noiserun)
             #options.tmpname = "/mnt/ssdcache/histograms_Run%05d.root" % int(options.noiserun)
             #options.tmpname = "/nfs/cygno/users/dimperig/CYGNO/CYGNO-tmp/histograms_Run%05d.root" % int(options.noiserun)
-            options.tmpname = "../data/histograms_Run%05d.root" % int(options.noiserun)
             #FIXME
             #options.tmpname = "/nfs/cygno/users/dimperig/CYGNO/CYGNO-tmp/histograms_Run%05d_cropped.root" % int(options.noiserun)
         else:
@@ -224,7 +223,7 @@ if __name__ == "__main__":
         t0=time.time()
        
         # UNCOMMENT THIS LINE IF YOU WANT TO STUDY THE SIMULATION WITH THE SAME STATISTICAL FLUCTUATIONS (SAME SEED): IT IS USEFUL FOR DEBUGGING
-        #np.random.seed(seed=0)
+        np.random.seed(seed=0)
 
 
         eventnumber = np.array([-999], dtype="int")
