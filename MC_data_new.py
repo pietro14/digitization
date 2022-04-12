@@ -104,10 +104,8 @@ def AddBckg(options, i):
     if options.bckg:
         if sw.checkfiletmp(int(options.noiserun)):
             options.tmpname = "/tmp/histograms_Run%05d.root" % int(options.noiserun)
-            #options.tmpname = "/mnt/ssdcache/histograms_Run%05d.root" % int(options.noiserun)
-            #options.tmpname = "/nfs/cygno/users/dimperig/CYGNO/CYGNO-tmp/histograms_Run%05d.root" % int(options.noiserun)
             #FIXME
-            #options.tmpname = "/nfs/cygno/users/dimperig/CYGNO/CYGNO-tmp/histograms_Run%05d_cropped.root" % int(options.noiserun)
+            #options.tmpname = "/nfs/cygno/users/dimperig/CYGNO/CYGNO-tmp/histograms_Run%05d.root" % int(options.noiserun)
         else:
             print ('Downloading file: ' + sw.swift_root_file(options.tag, int(options.noiserun)))
             options.tmpname = sw.swift_download_root_file(sw.swift_root_file(options.tag, int(options.noiserun)),int(options.noiserun))
@@ -222,9 +220,7 @@ if __name__ == "__main__":
                 tree=rootfile.Get('nTuple')            #GETTING NTUPLES
             
                 infilename=infile[:-5]    
-                #outfile=rt.TFile('%s/histograms_Run%05d.root' % (opt.outfolder,run_count), 'RECREATE') #OUTPUT NAME (only run number)
-                outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO
-                #outfile=rt.TFile('%s/histograms_%s_%d_mm_%d_V_%s.root' % (opt.outfolder, infilename, opt.z_gem-z_ini, opt.GEM1_HV, time.strftime("%Y%m%d-%H%M%S") ), 'RECREATE') #OUTPUT NAME WITH PARAMETERS INFO AND TIMESTAMP
+                outfile=rt.TFile('%s/histograms_Run%05d.root' % (opt.outfolder,run_count), 'RECREATE') #OUTPUT NAME (only run number)
                 outfile.mkdir('event_info')
                 SaveValues(params, outfile) ## SAVE PARAMETERS OF THE RUN
                 outtree = rt.TTree("info_tree", "info_tree")

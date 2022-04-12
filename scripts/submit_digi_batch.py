@@ -66,10 +66,12 @@ if __name__ == "__main__":
     tmp_file.write(tmp_filecont)
     tmp_file.close()
     
-    #RAM=8000
-    RAM=16000
+    RAM=4000
+    #RAM=16000
 
-    sub_cmd = 'qsub -q cygno-custom -d {dpath} -l mem={ram}mb -o localhost:{logf} {jobf}'.format(dpath=abswpath,ram=RAM,logf=log_file_name,jobf=job_file_name)
+    #sub_cmd = 'qsub -q cygno-custom -d {dpath} -l mem={ram}mb -o localhost:{logf} {jobf}'.format(dpath=abswpath,ram=RAM,logf=log_file_name,jobf=job_file_name)
+    sub_cmd = 'qsub -q cygno -l mem={ram}mb -d {dpath} -o localhost:{logf} {jobf}'.format(dpath=abswpath,ram=RAM,logf=log_file_name,jobf=job_file_name)
+
     #sub_cmd = 'qsub -q cygno-custom -l nodes=1:disk5 -d {dpath} -o localhost:{logf} {jobf}'.format(dpath=abswpath,logf=log_file_name,jobf=job_file_name)
     commands.append(sub_cmd)
 

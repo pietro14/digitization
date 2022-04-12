@@ -1,9 +1,9 @@
 {
 ##from https://arxiv.org/pdf/2007.00608.pdf
-'diff_const_sigma0T'    : 0.1225,     # diffusion constant [mm]^2
-'diff_coeff_T'          : 0.01232,    # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
-'diff_const_sigma0L'    : 0.0676,     # diffusion constant [mm]^2
-'diff_coeff_L'          : 0.00978,    # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
+'diff_const_sigma0T'    : 0.1225,    # diffusion constant [mm]^2
+'diff_coeff_T'          : 0.01232,   # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
+'diff_const_sigma0L'    : 0.0676,    # diffusion constant [mm]^2
+'diff_coeff_L'          : 0.00978,   # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
 
 'x_dim'			: 350,       # first dimension of the detector
 'y_dim'			: 350,       # second dimension of the detector
@@ -33,8 +33,8 @@
 'sensor_size'           : 14.976,    # sensor dimension [mm] ORCA Fusion
 'camera_aperture'       : 0.95,
 
-'bckg'                  : True,     # if 'True' background is added
-'NR'                    : False,     # 'True' for NR digitization, 'False' for ER   
-'events'                : 10,        # number of events to be processed, -1 = all
+'bckg'                  : True,      # if 'True' background is added
+'NR'                    : True,      # 'True' for NR digitization, 'False' for ER   
+'events'                : 5,         # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
 }
