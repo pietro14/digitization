@@ -14,7 +14,7 @@
 'zcloud'		: 20,        # z dimension of the electron cloud in [mm]
 
 #FIXME
-'z_gem'			: 255.+250., # GEM z coordinate [mm] Always add 255mm since in Geant4 center of sensitive region is at 255mm
+'z_gem'			: 255.+250., # GEM z coordinate [mm]. Always add 255mm since in Geant4 center of sensitive region is at 255mm
 'tag'			: 'Data',    # Use 'Data' to download pedestal run with swiftlib.py
 'noiserun'              : 4159,      # pedestal run to add as background
 
@@ -34,7 +34,8 @@
 'camera_aperture'       : 0.95,
 
 'bckg'                  : True,      # if 'True' background is added
-'NR'                    : False,      # 'True' for NR digitization, 'False' for ER   
-'events'                : 5,         # number of events to be processed, -1 = all
+'NR'                    : True,     # 'True' for NR digitization, 'False' for ER   
+'events'                : 5,        # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
+'randZ_range'           : 0.,        # Track z coordinate range [mm]. Tracks will be generated uniformly between 'z_hit+randZ_range/2' and 'z_hit-randZ_range/2'  
 }

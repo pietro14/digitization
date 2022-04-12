@@ -7,6 +7,7 @@ import time
 import sys
 import numpy as np
 import root_numpy as rn
+import random
 from scipy.stats import expon
 from scipy.stats import poisson
 
@@ -259,6 +260,14 @@ if __name__ == "__main__":
                     theta_ini[0] = np.arccos( (tree.x_hits[1]-tree.x_hits[0]) / np.sqrt( np.power((tree.x_hits[1]-tree.x_hits[0]),2) + np.power((tree.y_hits[1]-tree.y_hits[0]),2) + np.power((tree.z_hits[1]-tree.z_hits[0]),2)) )
                     outtree.Fill()
 
+                    # add random Z to tracks
+                    x_hits_tr = tree.x_hits
+                    if opt.randZ_range:
+                        rand = (random.random()-0.5)*(opt.randZ_range)
+                        for ihit in range(0,tree.numhits):
+                            x_hits_tr[ihit]+=rand
+
+
                     ## with saturation
                     if (opt.saturation):
 
@@ -271,9 +280,9 @@ if __name__ == "__main__":
 
                             ## here swapping X with Z beacuse in geant the drift axis is X
                             if (opt.NR == True):
-                                S3D = cloud_smearing3D(tree.x_hits[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                S3D = cloud_smearing3D(x_hits_tr[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
                             else:
-                                S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],x_hits_tr[ihit],tree.energyDep_hits[ihit],opt)
 
                             S3D_x=np.append(S3D_x, S3D[0])
                             S3D_y=np.append(S3D_y, S3D[1])
@@ -319,9 +328,9 @@ if __name__ == "__main__":
                         for ihit in range(0,tree.numhits):
                             ## here swapping X with Z beacuse in geant the drift axis is X
                             if (opt.NR==True):
-                                S2D = ph_smearing2D(tree.x_hits[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                S2D = ph_smearing2D(x_hits_tr[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
                             else:
-                                S2D = ph_smearing2D(tree.z_hits[ihit],tree.y_hits[ihit],tree.x_hits[ihit],tree.energyDep_hits[ihit],opt)
+                                S2D = ph_smearing2D(tree.z_hits[ihit],tree.y_hits[ihit],x_hits_tr[ihit],tree.energyDep_hits[ihit],opt)
                             
                             for t in range(0, len(S2D[0])):
                                 tot_ph_G3+=1
