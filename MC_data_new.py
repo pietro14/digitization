@@ -216,7 +216,6 @@ if __name__ == "__main__":
                 
                 #FIXME
                 z_ini = 255.
-                zbins = int(opt.zcloud/opt.z_vox_dim)
                 rootfile=rt.TFile.Open(opt.infolder+"/"+infile)
                 tree=rootfile.Get('nTuple')            #GETTING NTUPLES
             
@@ -288,14 +287,20 @@ if __name__ == "__main__":
                             S3D_y=np.append(S3D_y, S3D[1])
                             S3D_z=np.append(S3D_z, S3D[2])
 
+
+                        # compute zcould (+1mm to not lose electrons on the hedge)
+                        zcloud=(int(round(max(S3D_z)-min(S3D_z))))+1 
+                        zbins = int(zcloud/opt.z_vox_dim)
+
                         # compute max and min for x,y,z. Those values define the smallest volume that contains all electrons
                         # +/-2 is needed for electrons close to the hedge
                         xmax=+2+int(round(max( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim))) 
                         xmin=-2+int(round(min( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim)))
-                        ymax=+2+int(round(max( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim) ))
+                        ymax=+2+int(round(max( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim)))
                         ymin=-2+int(round(min( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim))) 
                         zmax=+2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
                         zmin=-2+int(round(min( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim)))
+
 
                         # numpy histo is faster than ROOT histo
                         histo_cloud_entries=np.array(
