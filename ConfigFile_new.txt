@@ -12,8 +12,9 @@
 
 #FIXME
 'z_gem'			: 255.+250., # GEM z coordinate [mm]. Always add 255mm since in Geant4 center of sensitive region is at 255mm
-'tag'			: 'Data',    # Use 'Data' to download pedestal run with swiftlib.py
-'noiserun'              : 4159,      # pedestal run to add as background
+'tag'			: 'Data',    # Set 'Data' to download a real pedestal run 
+'noiserun'              : 4432,      # pedestal run to add as background
+'bckg_path'		: '/tmp/',   # set path to pedestal run, or leave it black if you want to download it
 
 'ion_pot'               : 0.0462,    # ionization potential for He/CF4 60/40 [keV]
 'GEM1_HV'               : 440.,      # HV of GEM1
@@ -34,8 +35,9 @@
 
 'bckg'                  : True,      # if 'True' background is added
 'NR'                    : False,     # 'True' for NR digitization, 'False' for ER   
-'events'                : 2,        # number of events to be processed, -1 = all
+'events'                : 2,         # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
+'fixed_seed'            : False,     # If 'True' the seed of random distributions is set to 0 (for debugging purposes)
 
 'randZ_range'           : 0.,        # Track z coordinate range [mm]. Tracks will be generated uniformly between 'z_hit+randZ_range/2' and 'z_hit-randZ_range/2'  
 'absorption_l'          : 1000.,     # absorption lenght in [mm]

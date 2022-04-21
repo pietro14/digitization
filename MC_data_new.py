@@ -104,10 +104,11 @@ def Nph_saturation_vectorized(histo_cloud,options):
 def AddBckg(options, i):
     bckg_array=np.zeros((options.x_pix,options.y_pix))
     if options.bckg:
-        if sw.checkfiletmp(int(options.noiserun)):
-            options.tmpname = "/tmp/histograms_Run%05d.root" % int(options.noiserun)
+        if options.bckg_path:
+            options.tmpname = "%s/histograms_Run%05d.root" % (options.bckg_path,int(options.noiserun))
+        elif sw.checkfiletmp(int(options.noiserun)):
             #FIXME
-            #options.tmpname = "/nfs/cygno/users/dimperig/CYGNO/CYGNO-tmp/histograms_Run%05d.root" % int(options.noiserun)
+            options.tmpname = "/tmp/histograms_Run%05d.root" % int(options.noiserun)
         else:
             print ('Downloading file: ' + sw.swift_root_file(options.tag, int(options.noiserun)))
             options.tmpname = sw.swift_download_root_file(sw.swift_root_file(options.tag, int(options.noiserun)),int(options.noiserun))
@@ -129,7 +130,7 @@ def SaveValues(par, out):
     out.cd('param_dir')
     
     for k,v in par.items():
-        if (k!='tag'):
+        if (k!='tag' and k!='bckg_path'):
             h=rt.TH1F(k, '', 1, 0, 1)
             h.SetBinContent(1, v)
             h.Write()
@@ -196,8 +197,9 @@ if __name__ == "__main__":
     run_count=1
     t0=time.time()
    
-    # Set fixed seed for random distributions for debugging purposes
-    np.random.seed(seed=0)
+    # check if 'fixed seed' for random distributions (for debugging purposes)
+    if (opt.fixed_seed==True):
+        np.random.seed(seed=0)
 
 
     eventnumber = np.array([-999], dtype="int")
