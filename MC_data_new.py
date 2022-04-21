@@ -196,8 +196,9 @@ if __name__ == "__main__":
     run_count=1
     t0=time.time()
    
-    # Set fixed seed for random distributions for debugging purposes
-    np.random.seed(seed=0)
+    # check if 'fixed seed' for random distributions (for debugging purposes)
+    if (opt.fixed_seed==True):
+        np.random.seed(seed=0)
 
 
     eventnumber = np.array([-999], dtype="int")
