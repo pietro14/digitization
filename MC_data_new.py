@@ -290,7 +290,6 @@ if __name__ == "__main__":
 
                         # if there are no electrons on GEM3, just use empty image 
                         if S3D_x.size == 0: 
-                           print("empty image")
                            array2d_Nph = np.zeros((opt.x_pix,opt.y_pix))
 
                         # if there are electrons on GEM3, apply saturation effect 
