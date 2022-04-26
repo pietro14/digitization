@@ -32,7 +32,6 @@ def NelGEM2(energyDep,z_hit,options):
     # total number of secondary electrons considering the gain in the 2nd GEM foil
     n_tot_el=n_el_oneGEM*GEM2_gain*extraction_eff_GEM2
 
-
     return n_tot_el
 
 def cloud_smearing3D(x_hit,y_hit,z_hit,energyDep_hit,options):
@@ -289,40 +288,46 @@ if __name__ == "__main__":
                             S3D_y=np.append(S3D_y, S3D[1])
                             S3D_z=np.append(S3D_z, S3D[2])
 
+                        # if there are no electrons on GEM3, just use empty image 
+                        if S3D_x.size == 0: 
+                           print("empty image")
+                           array2d_Nph = np.zeros((opt.x_pix,opt.y_pix))
 
-                        # compute zcould (+1mm to not lose electrons on the hedge)
-                        zcloud=(int(round(max(S3D_z)-min(S3D_z))))+1 
-                        zbins = int(zcloud/opt.z_vox_dim)
+                        # if there are electrons on GEM3, apply saturation effect 
+                        else:
+                            # compute zcould (+1mm to not lose electrons on the hedge)
+                            zcloud=(int(round(max(S3D_z)-min(S3D_z))))+1 
+                            zbins = int(zcloud/opt.z_vox_dim)
 
-                        # compute max and min for x,y,z. Those values define the smallest volume that contains all electrons
-                        # +/-2 is needed for electrons close to the hedge
-                        xmax=+2+int(round(max( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim))) 
-                        xmin=-2+int(round(min( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim)))
-                        ymax=+2+int(round(max( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim)))
-                        ymin=-2+int(round(min( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim))) 
-                        zmax=+2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
-                        zmin=-2+int(round(min( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim)))
+                            # compute max and min for x,y,z. Those values define the smallest volume that contains all electrons
+                            # +/-2 is needed for electrons close to the hedge
+                            xmax=+2+int(round(max( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim))) 
+                            xmin=-2+int(round(min( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim)))
+                            ymax=+2+int(round(max( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim)))
+                            ymin=-2+int(round(min( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim))) 
+                            zmax=+2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
+                            zmin=-2+int(round(min( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim)))
 
 
-                        # numpy histo is faster than ROOT histo
-                        histo_cloud_entries=np.array(
-                                [(0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim ,
-                                 (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim , 
-                                 (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim]).transpose()
+                            # numpy histo is faster than ROOT histo
+                            histo_cloud_entries=np.array(
+                                    [(0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim ,
+                                     (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim , 
+                                     (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim]).transpose()
 
-                        histo_cloud, hedge = np.histogramdd(
-                                histo_cloud_entries,
-                                bins=(xmax-xmin,ymax-ymin,zmax-zmin),
-                                range=([xmin,xmax],[ymin,ymax],[zmin,zmax]),
-                                normed=None, weights=None, density=None)
+                            histo_cloud, hedge = np.histogramdd(
+                                    histo_cloud_entries,
+                                    bins=(xmax-xmin,ymax-ymin,zmax-zmin),
+                                    range=([xmin,xmax],[ymin,ymax],[zmin,zmax]),
+                                    normed=None, weights=None, density=None)
 
-                        # apply saturation vectorized function
-                        result_GEM3 = Nph_saturation_vectorized(histo_cloud,opt)   
-                        array2d_Nph = result_GEM3[1]
-                        tot_ph_G3 = np.sum(array2d_Nph)
-                        
-                        # add empty block of pixels around the histo_cloud and get the dimensions of the final image
-                        array2d_Nph=np.pad(array2d_Nph, ((xmin, opt.x_pix-xmax), (ymin, opt.y_pix-ymax)), 'constant', constant_values=0)
+                            # apply saturation vectorized function
+                            result_GEM3 = Nph_saturation_vectorized(histo_cloud,opt)   
+                            array2d_Nph = result_GEM3[1]
+                            tot_ph_G3 = np.sum(array2d_Nph)
+                            
+                            # add empty block of pixels around the histo_cloud and get the dimensions of the final image
+                            array2d_Nph=np.pad(array2d_Nph, ((xmin, opt.x_pix-xmax), (ymin, opt.y_pix-ymax)), 'constant', constant_values=0)
                            
                         #print("tot num of sensor counts after GEM3 including saturation: %d"%(tot_ph_G3))
                         #print("tot num of sensor counts after GEM3 without saturation: %d"%(opt.A*tot_el_G2*GEM3_gain* omega * opt.photons_per_el * opt.counts_per_photon))
