@@ -104,7 +104,7 @@ def Nph_saturation_vectorized(histo_cloud,options):
 def AddBckg(options, i):
     bckg_array=np.zeros((options.x_pix,options.y_pix))
     if options.bckg:
-        if options.bckg_path:
+        if os.path.exists("%s/histograms_Run%05d.root" % (options.bckg_path,int(options.noiserun))):
             options.tmpname = "%s/histograms_Run%05d.root" % (options.bckg_path,int(options.noiserun))
         elif sw.checkfiletmp(int(options.noiserun)):
             #FIXME
