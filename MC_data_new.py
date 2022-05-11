@@ -10,12 +10,9 @@ import root_numpy as rn
 import random
 from scipy.stats import expon
 from scipy.stats import poisson
-import math
 
 #sys.path.append("../reconstruction")
 import swiftlib as sw
-
-from rebin import * 
 
 
 ## FUNCTIONS DEFINITION
@@ -154,9 +151,6 @@ def SaveEventInfo(info_dict, folder, out):  # THIS FUNCTION IS CURRENTLY NOT USE
     info_dict.clear()
 
     return None
-
-def round_up_to_even(f):
-    return math.ceil(f / 2.) * 2
 
 ######################################### MAIN EXECUTION ###########################################
 
@@ -300,32 +294,29 @@ if __name__ == "__main__":
 
                         # if there are electrons on GEM3, apply saturation effect 
                         else:
+                            # compute zcould (+1mm to not lose electrons on the hedge)
+                            zcloud=(int(round(max(S3D_z)-min(S3D_z))))+1 
+                            zbins = int(zcloud/opt.z_vox_dim)
 
-                            xmax=max(S3D_x)
-                            xmin=min(S3D_x)
-                            ymax=max(S3D_y)
-                            ymin=min(S3D_y)
-                            zmax=max(S3D_z)
-                            zmin=min(S3D_z)
+                            # compute max and min for x,y,z. Those values define the smallest volume that contains all electrons
+                            # +/-2 is needed for electrons close to the hedge
+                            xmax=+2+int(round(max( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim))) 
+                            xmin=-2+int(round(min( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim)))
+                            ymax=+2+int(round(max( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim)))
+                            ymin=-2+int(round(min( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim))) 
+                            zmax=+2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
+                            zmin=-2+int(round(min( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim)))
+
 
                             # numpy histo is faster than ROOT histo
                             histo_cloud_entries=np.array(
-                                    [S3D_x,
-                                     S3D_y , 
-                                     S3D_z]).transpose()
+                                    [(0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim ,
+                                     (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim , 
+                                     (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim]).transpose()
 
-                            xbin_dim=opt.x_vox_dim #opt.x_dim/opt.x_pix
-                            ybin_dim=opt.y_vox_dim #opt.y_dim/opt.y_pix
-                            zbin_dim=opt.z_vox_dim
-
-
-                            x_n_bin=round_up_to_even((xmax-xmin)/xbin_dim)
-                            y_n_bin=round_up_to_even((ymax-ymin)/ybin_dim)
-                            z_n_bin=round_up_to_even((zmax-zmin)/zbin_dim)
-
-                            histo_cloud, edge = np.histogramdd(
+                            histo_cloud, hedge = np.histogramdd(
                                     histo_cloud_entries,
-                                    bins=(x_n_bin-1, y_n_bin-1, z_n_bin-1),
+                                    bins=(xmax-xmin,ymax-ymin,zmax-zmin),
                                     range=([xmin,xmax],[ymin,ymax],[zmin,zmax]),
                                     normed=None, weights=None, density=None)
 
@@ -333,20 +324,9 @@ if __name__ == "__main__":
                             result_GEM3 = Nph_saturation_vectorized(histo_cloud,opt)   
                             array2d_Nph = result_GEM3[1]
                             tot_ph_G3 = np.sum(array2d_Nph)
-
-                            x_n_bin2=round_up_to_even((xmax-xmin)/xbin_dim)
-                            y_n_bin2=round_up_to_even((ymax-ymin)/ybin_dim)
-
-                            xedges2 = np.linspace(xmin, xmax, num=x_n_bin2)
-                            yedges2 = np.linspace(ymin, ymax, num=y_n_bin2)
-
-                            array2d_Nph=np.around(array2d_Nph)
-                            # for rebinning we are using the code in this repo: https://github.com/jhykes/rebin
-                            # not sure if we have to add an acknowledgement in the README, or do something else to respect the copyright/license 
-                            array2d_Nph = rebin2d(edge[0], edge[1], array2d_Nph, xedges2,  yedges2, interp_kind=3)  #test also other interp_kind
-                            array2d_Nph=np.around(array2d_Nph)
-
-                            array2d_Nph=np.pad(array2d_Nph, ( ( int((opt.x_pix-x_n_bin2)/2), int((opt.x_pix-x_n_bin2)/2+1)),  ( int((opt.y_pix-y_n_bin2)/2), int((opt.y_pix-y_n_bin2)/2+1))), 'constant', constant_values=0)   
+                            
+                            # add empty block of pixels around the histo_cloud and get the dimensions of the final image
+                            array2d_Nph=np.pad(array2d_Nph, ((xmin, opt.x_pix-xmax), (ymin, opt.y_pix-ymax)), 'constant', constant_values=0)
                            
                         #print("tot num of sensor counts after GEM3 including saturation: %d"%(tot_ph_G3))
                         #print("tot num of sensor counts after GEM3 without saturation: %d"%(opt.A*tot_el_G2*GEM3_gain* omega * opt.photons_per_el * opt.counts_per_photon))
@@ -377,13 +357,6 @@ if __name__ == "__main__":
 
                     final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
                     final_image=rn.array2hist(total, final_image)
-
-                    counter=0
-                    for i in range(0, opt.x_pix):
-                        for j in range(0, opt.y_pix):
-                            counter=counter+final_image.GetBinContent(i,j)
-                    print("non nul entries: ", counter)
-
                     outfile.cd()
                     final_image.Write()            
 

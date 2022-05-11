@@ -5,16 +5,16 @@
 'diff_const_sigma0L'    : 0.0676,    # diffusion constant [mm]^2
 'diff_coeff_L'          : 0.00978,   # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
 
-'x_dim'		            	: 350,       # first dimension of the detector
-'y_dim'	            		: 350,       # second dimension of the detector
-'x_pix'			            : 2304,      # number of pixels in the first dimension
-'y_pix'			            : 2304,      # number of pixels in the second dimension
+'x_dim'			: 350,       # first dimension of the detector
+'y_dim'			: 350,       # second dimension of the detector
+'x_pix'			: 2304,      # number of pixels in the first dimension
+'y_pix'			: 2304,      # number of pixels in the second dimension
 
 #FIXME
-'z_gem'			            : 255.+250., # GEM z coordinate [mm]. Always add 255mm since in Geant4 center of sensitive region is at 255mm
-'tag'			              : 'Data',    # Set 'Data' to download a real pedestal run 
+'z_gem'			: 255.+250., # GEM z coordinate [mm]. Always add 255mm since in Geant4 center of sensitive region is at 255mm
+'tag'			: 'Data',    # Set 'Data' to download a real pedestal run 
 'noiserun'              : 4432,      # pedestal run to add as background
-'bckg_path'		          : '/tmp/',   # set path to pedestal run, or leave it black if you want to download it
+'bckg_path'		: '/tmp/',   # set path to pedestal run, or leave it black if you want to download it
 
 'ion_pot'               : 0.0462,    # ionization potential for He/CF4 60/40 [keV]
 'GEM1_HV'               : 440.,      # HV of GEM1
@@ -23,8 +23,6 @@
 
 # saturation parameters
 'saturation'            : True,      # if 'True' saturation effect is applied on GEM3    
-'x_vox_dim'             : 350./2304.,# x voxel size in [mm]
-'y_vox_dim'             : 350./2304.,# y voxel size in [mm]
 'z_vox_dim'             : 0.1,       # z voxel size in [mm]
 'A'                     : 1.,        # free parameter (total scale factor MC/data) 
 'beta'                  : 1.0e-5,    # saturation parameter
@@ -37,7 +35,7 @@
 
 'bckg'                  : True,      # if 'True' background is added
 'NR'                    : False,     # 'True' for NR digitization, 'False' for ER   
-'events'                : 100,       # number of events to be processed, -1 = all
+'events'                : 2,         # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
 'fixed_seed'            : False,     # If 'True' the seed of random distributions is set to 0 (for debugging purposes)
 
