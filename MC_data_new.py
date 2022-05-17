@@ -437,12 +437,6 @@ if __name__ == "__main__":
                     final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
                     final_image=rn.array2hist(total, final_image)
 
-                    counter=0
-                    for i in range(0, opt.x_pix):
-                        for j in range(0, opt.y_pix):
-                            counter=counter+final_image.GetBinContent(i,j)
-                    print("non nul entries: ", counter)
-
                     outfile.cd()
                     final_image.Write()            
 
