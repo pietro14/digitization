@@ -20,6 +20,58 @@ from rebin import *
 
 ## FUNCTIONS DEFINITION
 
+def NelGM1_vectorized(N_ioniz_el):
+    n_el_oneGEM=N_ioniz_el*0
+    if isinstance(N_ioniz_el, int):   # in case there is onyl one hit (very low energy)
+        for j in range(0,int(round(N_ioniz_el))):
+                nsec = expon(loc=0,scale=GEM1_gain).rvs()*extraction_eff_GEM1
+                n_el_oneGEM += nsec
+                n_el_oneGEM=N_ioniz_el*0
+    else:
+        for i, n in enumerate(N_ioniz_el):
+            for j in range(0,int(round(N_ioniz_el[i]))):
+                nsec = expon(loc=0,scale=GEM1_gain).rvs()*extraction_eff_GEM1
+                n_el_oneGEM[i] += nsec
+
+    return n_el_oneGEM
+
+
+def NelGEM2_vectorized(energyDep,z_hit,options):
+    n_ioniz_el=energyDep/options.ion_pot
+    drift_l = np.abs(z_hit-options.z_gem)
+    n_ioniz_el_mean = np.abs(n_ioniz_el*np.exp(-drift_l/options.absorption_l))
+    poisson_distr = lambda x: poisson(x).rvs()
+    n_ioniz_el = poisson_distr(n_ioniz_el_mean)
+
+    # total number of secondary electrons considering the gain in the 2nd GEM foil
+    n_tot_el=NelGM1_vectorized(n_ioniz_el)*GEM2_gain*extraction_eff_GEM2
+
+    return np.round(n_tot_el)
+
+
+def cloud_smearing3D_vectorized(x_hit,y_hit,z_hit,energyDep_hit, options):
+
+    nel=NelGEM2_vectorized(energyDep_hit,z_hit, options)
+
+    X=np.array([])
+    Y=np.array([])
+    Z=np.array([])
+
+    sigma_x = np.sqrt(options.diff_const_sigma0T+options.diff_coeff_T*(np.abs(z_hit-options.z_gem))/10.)
+    sigma_y = np.sqrt(options.diff_const_sigma0T+options.diff_coeff_T*(np.abs(z_hit-options.z_gem))/10.)
+    sigma_z = np.sqrt(options.diff_const_sigma0L+options.diff_coeff_L*(np.abs(z_hit-options.z_gem))/10.)
+
+    if isinstance(nel, float):
+        X = np.concatenate([np.random.normal(loc=(x_hit), scale=sigma_x, size=int(nel)) ])
+        Y = np.concatenate([np.random.normal(loc=(y_hit), scale=sigma_y, size=int(nel)) ])
+        Z = np.concatenate([np.random.normal(loc=(z_hit-z_ini), scale=sigma_z, size=int(nel)) ])
+    else:
+        X = np.concatenate([np.random.normal(loc=(x_hit_i), scale=sigma_i, size=int(nel_i)) for i, (x_hit_i, sigma_i, nel_i) in enumerate(zip(x_hit, sigma_x, nel))])
+        Y = np.concatenate([np.random.normal(loc=(y_hit_i), scale=sigma_i, size=int(nel_i)) for i, (y_hit_i, sigma_i, nel_i) in enumerate(zip(y_hit, sigma_y, nel))])
+        Z = np.concatenate([np.random.normal(loc=(z_hit_i-z_ini), scale=sigma_i, size=int(nel_i)) for i, (z_hit_i, sigma_i, nel_i) in enumerate(zip(z_hit, sigma_z, nel))])
+
+    return X, Y, Z
+
 def NelGEM2(energyDep,z_hit,options):
     n_ioniz_el=energyDep/options.ion_pot
     drift_l = np.abs(z_hit-options.z_gem)
@@ -277,22 +329,28 @@ if __name__ == "__main__":
                     ## with saturation
                     if (opt.saturation):
 
-                        S3D_x=np.array([])
-                        S3D_y=np.array([])
-                        S3D_z=np.array([])
+                        # non-vectorized smearing
+                        #S3D_x=np.array([])
+                        #S3D_y=np.array([])
+                        #S3D_z=np.array([])
+                        #for ihit in range(0,tree.numhits):
+                        #    #print("Processing hit %d of %d"%(ihit,tree.numhits))
+                        #    ## here swapping X with Z beacuse in geant the drift axis is X
+                        #    if (opt.NR == True):
+                        #        S3D = cloud_smearing3D(x_hits_tr[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
+                        #    else:
+                        #        S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],x_hits_tr[ihit],tree.energyDep_hits[ihit],opt)
+                        #    S3D_x=np.append(S3D_x, S3D[0])
+                        #    S3D_y=np.append(S3D_y, S3D[1])
+                        #    S3D_z=np.append(S3D_z, S3D[2])
 
-                        for ihit in range(0,tree.numhits):
-                            #print("Processing hit %d of %d"%(ihit,tree.numhits))
+                        # vectorized smearing
+                        # if ER file need to swapp X with Z beacuse in geant the drift axis is X
+                        if (opt.NR == True):
+                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(tree.x_hits),np.array(tree.y_hits),np.array(tree.z_hits),np.array(tree.energyDep_hits),opt)
+                        else:
+                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(tree.z_hits),np.array(tree.y_hits),np.array(tree.x_hits),np.array(tree.energyDep_hits),opt)
 
-                            ## here swapping X with Z beacuse in geant the drift axis is X
-                            if (opt.NR == True):
-                                S3D = cloud_smearing3D(x_hits_tr[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
-                            else:
-                                S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],x_hits_tr[ihit],tree.energyDep_hits[ihit],opt)
-
-                            S3D_x=np.append(S3D_x, S3D[0])
-                            S3D_y=np.append(S3D_y, S3D[1])
-                            S3D_z=np.append(S3D_z, S3D[2])
 
                         # if there are no electrons on GEM3, just use empty image 
                         if S3D_x.size == 0: 
@@ -341,9 +399,10 @@ if __name__ == "__main__":
                             yedges2 = np.linspace(ymin, ymax, num=y_n_bin2)
 
                             array2d_Nph=np.around(array2d_Nph)
+
                             # for rebinning we are using the code in this repo: https://github.com/jhykes/rebin
                             # not sure if we have to add an acknowledgement in the README, or do something else to respect the copyright/license 
-                            array2d_Nph = rebin2d(edge[0], edge[1], array2d_Nph, xedges2,  yedges2, interp_kind=3)  #test also other interp_kind
+                            array2d_Nph = rebin2d(edge[0], edge[1], array2d_Nph, xedges2,  yedges2, interp_kind=3)  
                             array2d_Nph=np.around(array2d_Nph)
 
                             array2d_Nph=np.pad(array2d_Nph, ( ( int((opt.x_pix-x_n_bin2)/2), int((opt.x_pix-x_n_bin2)/2+1)),  ( int((opt.y_pix-y_n_bin2)/2), int((opt.y_pix-y_n_bin2)/2+1))), 'constant', constant_values=0)   
