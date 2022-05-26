@@ -10,12 +10,67 @@ import root_numpy as rn
 import random
 from scipy.stats import expon
 from scipy.stats import poisson
+import math
 
 #sys.path.append("../reconstruction")
 import swiftlib as sw
 
+from rebin import * 
+
 
 ## FUNCTIONS DEFINITION
+
+def NelGM1_vectorized(N_ioniz_el):
+    n_el_oneGEM=N_ioniz_el*0
+    if isinstance(N_ioniz_el, int):   # in case there is onyl one hit (very low energy)
+        for j in range(0,int(round(N_ioniz_el))):
+                nsec = expon(loc=0,scale=GEM1_gain).rvs()*extraction_eff_GEM1
+                n_el_oneGEM += nsec
+                n_el_oneGEM=N_ioniz_el*0
+    else:
+        for i, n in enumerate(N_ioniz_el):
+            for j in range(0,int(round(N_ioniz_el[i]))):
+                nsec = expon(loc=0,scale=GEM1_gain).rvs()*extraction_eff_GEM1
+                n_el_oneGEM[i] += nsec
+
+    return n_el_oneGEM
+
+
+def NelGEM2_vectorized(energyDep,z_hit,options):
+    n_ioniz_el=energyDep/options.ion_pot
+    drift_l = np.abs(z_hit-options.z_gem)
+    n_ioniz_el_mean = np.abs(n_ioniz_el*np.exp(-drift_l/options.absorption_l))
+    poisson_distr = lambda x: poisson(x).rvs()
+    n_ioniz_el = poisson_distr(n_ioniz_el_mean)
+
+    # total number of secondary electrons considering the gain in the 2nd GEM foil
+    n_tot_el=NelGM1_vectorized(n_ioniz_el)*GEM2_gain*extraction_eff_GEM2
+
+    return np.round(n_tot_el)
+
+
+def cloud_smearing3D_vectorized(x_hit,y_hit,z_hit,energyDep_hit, options):
+
+    nel=NelGEM2_vectorized(energyDep_hit,z_hit, options)
+
+    X=np.array([])
+    Y=np.array([])
+    Z=np.array([])
+
+    sigma_x = np.sqrt(options.diff_const_sigma0T+options.diff_coeff_T*(np.abs(z_hit-options.z_gem))/10.)
+    sigma_y = np.sqrt(options.diff_const_sigma0T+options.diff_coeff_T*(np.abs(z_hit-options.z_gem))/10.)
+    sigma_z = np.sqrt(options.diff_const_sigma0L+options.diff_coeff_L*(np.abs(z_hit-options.z_gem))/10.)
+
+    if isinstance(nel, float):
+        X = np.concatenate([np.random.normal(loc=(x_hit), scale=sigma_x, size=int(nel)) ])
+        Y = np.concatenate([np.random.normal(loc=(y_hit), scale=sigma_y, size=int(nel)) ])
+        Z = np.concatenate([np.random.normal(loc=(z_hit-z_ini), scale=sigma_z, size=int(nel)) ])
+    else:
+        X = np.concatenate([np.random.normal(loc=(x_hit_i), scale=sigma_i, size=int(nel_i)) for i, (x_hit_i, sigma_i, nel_i) in enumerate(zip(x_hit, sigma_x, nel))])
+        Y = np.concatenate([np.random.normal(loc=(y_hit_i), scale=sigma_i, size=int(nel_i)) for i, (y_hit_i, sigma_i, nel_i) in enumerate(zip(y_hit, sigma_y, nel))])
+        Z = np.concatenate([np.random.normal(loc=(z_hit_i-z_ini), scale=sigma_i, size=int(nel_i)) for i, (z_hit_i, sigma_i, nel_i) in enumerate(zip(z_hit, sigma_z, nel))])
+
+    return X, Y, Z
 
 def NelGEM2(energyDep,z_hit,options):
     n_ioniz_el=energyDep/options.ion_pot
@@ -152,6 +207,9 @@ def SaveEventInfo(info_dict, folder, out):  # THIS FUNCTION IS CURRENTLY NOT USE
 
     return None
 
+def round_up_to_even(f):
+    return math.ceil(f / 2.) * 2
+
 ######################################### MAIN EXECUTION ###########################################
 
 if __name__ == "__main__":
@@ -271,22 +329,28 @@ if __name__ == "__main__":
                     ## with saturation
                     if (opt.saturation):
 
-                        S3D_x=np.array([])
-                        S3D_y=np.array([])
-                        S3D_z=np.array([])
+                        # non-vectorized smearing
+                        #S3D_x=np.array([])
+                        #S3D_y=np.array([])
+                        #S3D_z=np.array([])
+                        #for ihit in range(0,tree.numhits):
+                        #    #print("Processing hit %d of %d"%(ihit,tree.numhits))
+                        #    ## here swapping X with Z beacuse in geant the drift axis is X
+                        #    if (opt.NR == True):
+                        #        S3D = cloud_smearing3D(x_hits_tr[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
+                        #    else:
+                        #        S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],x_hits_tr[ihit],tree.energyDep_hits[ihit],opt)
+                        #    S3D_x=np.append(S3D_x, S3D[0])
+                        #    S3D_y=np.append(S3D_y, S3D[1])
+                        #    S3D_z=np.append(S3D_z, S3D[2])
 
-                        for ihit in range(0,tree.numhits):
-                            #print("Processing hit %d of %d"%(ihit,tree.numhits))
+                        # vectorized smearing
+                        # if ER file need to swapp X with Z beacuse in geant the drift axis is X
+                        if (opt.NR == True):
+                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(tree.x_hits),np.array(tree.y_hits),np.array(tree.z_hits),np.array(tree.energyDep_hits),opt)
+                        else:
+                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(tree.z_hits),np.array(tree.y_hits),np.array(tree.x_hits),np.array(tree.energyDep_hits),opt)
 
-                            ## here swapping X with Z beacuse in geant the drift axis is X
-                            if (opt.NR == True):
-                                S3D = cloud_smearing3D(x_hits_tr[ihit],tree.y_hits[ihit],tree.z_hits[ihit],tree.energyDep_hits[ihit],opt)
-                            else:
-                                S3D = cloud_smearing3D(tree.z_hits[ihit],tree.y_hits[ihit],x_hits_tr[ihit],tree.energyDep_hits[ihit],opt)
-
-                            S3D_x=np.append(S3D_x, S3D[0])
-                            S3D_y=np.append(S3D_y, S3D[1])
-                            S3D_z=np.append(S3D_z, S3D[2])
 
                         # if there are no electrons on GEM3, just use empty image 
                         if S3D_x.size == 0: 
@@ -294,29 +358,32 @@ if __name__ == "__main__":
 
                         # if there are electrons on GEM3, apply saturation effect 
                         else:
-                            # compute zcould (+1mm to not lose electrons on the hedge)
-                            zcloud=(int(round(max(S3D_z)-min(S3D_z))))+1 
-                            zbins = int(zcloud/opt.z_vox_dim)
 
-                            # compute max and min for x,y,z. Those values define the smallest volume that contains all electrons
-                            # +/-2 is needed for electrons close to the hedge
-                            xmax=+2+int(round(max( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim))) 
-                            xmin=-2+int(round(min( (0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim)))
-                            ymax=+2+int(round(max( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim)))
-                            ymin=-2+int(round(min( (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim))) 
-                            zmax=+2+int(round(max( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim))) 
-                            zmin=-2+int(round(min( (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim)))
-
+                            xmax=max(S3D_x)
+                            xmin=min(S3D_x)
+                            ymax=max(S3D_y)
+                            ymin=min(S3D_y)
+                            zmax=max(S3D_z)
+                            zmin=min(S3D_z)
 
                             # numpy histo is faster than ROOT histo
                             histo_cloud_entries=np.array(
-                                    [(0.5*opt.x_dim+S3D_x)*opt.x_pix/opt.x_dim ,
-                                     (0.5*opt.y_dim+S3D_y)*opt.y_pix/opt.y_dim , 
-                                     (0.5*zbins*opt.z_vox_dim+S3D_z)/opt.z_vox_dim]).transpose()
+                                    [S3D_x,
+                                     S3D_y , 
+                                     S3D_z]).transpose()
 
-                            histo_cloud, hedge = np.histogramdd(
+                            xbin_dim=opt.x_vox_dim #opt.x_dim/opt.x_pix
+                            ybin_dim=opt.y_vox_dim #opt.y_dim/opt.y_pix
+                            zbin_dim=opt.z_vox_dim
+
+
+                            x_n_bin=round_up_to_even((xmax-xmin)/xbin_dim)
+                            y_n_bin=round_up_to_even((ymax-ymin)/ybin_dim)
+                            z_n_bin=round_up_to_even((zmax-zmin)/zbin_dim)
+
+                            histo_cloud, edge = np.histogramdd(
                                     histo_cloud_entries,
-                                    bins=(xmax-xmin,ymax-ymin,zmax-zmin),
+                                    bins=(x_n_bin-1, y_n_bin-1, z_n_bin-1),
                                     range=([xmin,xmax],[ymin,ymax],[zmin,zmax]),
                                     normed=None, weights=None, density=None)
 
@@ -324,9 +391,21 @@ if __name__ == "__main__":
                             result_GEM3 = Nph_saturation_vectorized(histo_cloud,opt)   
                             array2d_Nph = result_GEM3[1]
                             tot_ph_G3 = np.sum(array2d_Nph)
-                            
-                            # add empty block of pixels around the histo_cloud and get the dimensions of the final image
-                            array2d_Nph=np.pad(array2d_Nph, ((xmin, opt.x_pix-xmax), (ymin, opt.y_pix-ymax)), 'constant', constant_values=0)
+
+                            x_n_bin2=round_up_to_even((xmax-xmin)/xbin_dim)
+                            y_n_bin2=round_up_to_even((ymax-ymin)/ybin_dim)
+
+                            xedges2 = np.linspace(xmin, xmax, num=x_n_bin2)
+                            yedges2 = np.linspace(ymin, ymax, num=y_n_bin2)
+
+                            array2d_Nph=np.around(array2d_Nph)
+
+                            # for rebinning we are using the code in this repo: https://github.com/jhykes/rebin
+                            # not sure if we have to add an acknowledgement in the README, or do something else to respect the copyright/license 
+                            array2d_Nph = rebin2d(edge[0], edge[1], array2d_Nph, xedges2,  yedges2, interp_kind=3)  
+                            array2d_Nph=np.around(array2d_Nph)
+
+                            array2d_Nph=np.pad(array2d_Nph, ( ( int((opt.x_pix-x_n_bin2)/2), int((opt.x_pix-x_n_bin2)/2+1)),  ( int((opt.y_pix-y_n_bin2)/2), int((opt.y_pix-y_n_bin2)/2+1))), 'constant', constant_values=0)   
                            
                         #print("tot num of sensor counts after GEM3 including saturation: %d"%(tot_ph_G3))
                         #print("tot num of sensor counts after GEM3 without saturation: %d"%(opt.A*tot_el_G2*GEM3_gain* omega * opt.photons_per_el * opt.counts_per_photon))
@@ -357,6 +436,7 @@ if __name__ == "__main__":
 
                     final_image=rt.TH2I('pic_run'+str(run_count)+'_ev'+str(entry), '', opt.x_pix, 0, opt.x_pix-1, opt.y_pix, 0, opt.y_pix-1) #smeared track with background
                     final_image=rn.array2hist(total, final_image)
+
                     outfile.cd()
                     final_image.Write()            
 
