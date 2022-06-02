@@ -289,6 +289,51 @@ if __name__ == "__main__":
                 outtree.Branch("theta_ini", theta_ini, "theta_ini/F")
                 outtree.Branch("phi_ini", phi_ini, "phi_ini/F")
 
+                ### saving track lenth##
+                param_tree = rt.TTree("param_tree","param_tree") #creating a tree
+
+                track_length_3D=np.empty((1),dtype="float32")
+                x_vertex=np.empty((1),dtype="float32")
+                y_vertex=np.empty((1),dtype="float32")
+                z_vertex=np.empty((1),dtype="float32")
+                x_vertex_end=np.empty((1),dtype="float32")
+                y_vertex_end=np.empty((1),dtype="float32")
+                z_vertex_end=np.empty((1),dtype="float32")
+                energy = np.empty((1),dtype="float32")
+                px = np.empty((1),dtype="float32")
+                py = np.empty((1),dtype="float32")
+                pz = np.empty((1),dtype="float32")
+                proj_track_2D= np.empty((1),dtype="float32")
+                theta = np.empty((1),dtype = "float32")
+                phi = np.empty((1),dtype = "float32")
+                nhits_og = np.empty((1),dtype = "int32")
+                xhits_og = np.empty((10000),dtype = "float32")
+                yhits_og = np.empty((10000),dtype = "float32")
+                zhits_og = np.empty((10000),dtype = "float32")
+                EDepHit_og = np.empty((10000),dtype = "float32")
+
+                
+                param_tree.Branch('track_length_3D',track_length_3D,"track_length_3D/F")
+                param_tree.Branch('proj_track_2D',proj_track_2D,"proj_track_2D/F")
+                param_tree.Branch('x_vertex',x_vertex,"x_vertex/F")
+                param_tree.Branch('y_vertex',y_vertex,"y_vertex/F")
+                param_tree.Branch('z_vertex',z_vertex,"z_vertex/F")
+                param_tree.Branch('x_vertex_end',x_vertex_end,"x_vertex_end/F")
+                param_tree.Branch('y_vertex_end',y_vertex_end,"y_vertex_end/F")
+                param_tree.Branch('z_vertex_end',z_vertex_end,"z_vertex_end/F")
+                param_tree.Branch('energy',energy,"energy/F")
+                param_tree.Branch('px',px,"px/F")
+                param_tree.Branch('py',py,"py/F")
+                param_tree.Branch('pz',pz,"pz/F")
+                param_tree.Branch('theta',theta,"theta/F")
+                param_tree.Branch('phi',phi,"phi/F") 
+                param_tree.Branch('nhits_og',nhits_og,"nhits_og/I")
+                param_tree.Branch('xhits_og',xhits_og,"xhits_og[nhits_og]/F")
+                param_tree.Branch('yhits_og',yhits_og,"yhits_og[nhits_og]/F")
+                param_tree.Branch('zhits_og',zhits_og,"zhits_og[nhits_og]/F")
+                param_tree.Branch('EDepHit_og',EDepHit_og,"EDepHit_og[nhits_og]/F")  
+
+
                 final_imgs=list();
                 
                 if opt.events==-1:
@@ -304,19 +349,7 @@ if __name__ == "__main__":
     
                 for entry in range(0, totev): #RUNNING ON ENTRIES
                     tree.GetEntry(entry)
-                    eventnumber[0] = tree.eventnumber
-                    #FIXME
-                    if (opt.NR==True): 
-                        energy_ini[0] = tree.ekin_particle
-                        particle_type[0] = tree.particle_type
-                    else: 
-                        energy_ini[0] = tree.ekin_particle[0]*1000
-                        particle_type[0] = 0
-                    phi_ini[0] = -999.
-                    theta_ini[0] = -999.
-                    phi_ini[0] = np.arctan2( (tree.y_hits[1]-tree.y_hits[0]),(tree.z_hits[1]-tree.z_hits[0]) )
-                    theta_ini[0] = np.arccos( (tree.x_hits[1]-tree.x_hits[0]) / np.sqrt( np.power((tree.x_hits[1]-tree.x_hits[0]),2) + np.power((tree.y_hits[1]-tree.y_hits[0]),2) + np.power((tree.z_hits[1]-tree.z_hits[0]),2)) )
-                    outtree.Fill()
+
 
                     # add random Z to tracks
                     x_hits_tr = tree.x_hits
@@ -324,6 +357,44 @@ if __name__ == "__main__":
                         rand = (random.random()-0.5)*(opt.randZ_range)
                         for ihit in range(0,tree.numhits):
                             x_hits_tr[ihit]+=rand
+
+
+                    eventnumber[0] = tree.eventnumber
+                    #FIXME
+                    if (opt.NR==True): 
+                        proj_track_2D[0]=np.sum(np.sqrt(np.power(np.ediff1d(np.array(tree.x_hits)),2)+np.power(np.ediff1d(np.array(tree.y_hits)),2)))
+                        energy_ini[0] = tree.ekin_particle
+                        particle_type[0] = tree.particle_type
+                    else: 
+                        proj_track_2D[0]=np.sum(np.sqrt(np.power(np.ediff1d(np.array(tree.z_hits)),2)+np.power(np.ediff1d(np.array(tree.y_hits)),2)))
+                        energy_ini[0] = tree.ekin_particle[0]*1000
+                        particle_type[0] = 0
+                    phi_ini[0] = -999.
+                    theta_ini[0] = -999.
+                    phi_ini[0] = np.arctan2( (tree.y_hits[1]-tree.y_hits[0]),(tree.z_hits[1]-tree.z_hits[0]) )
+                    theta_ini[0] = np.arccos( (tree.x_hits[1]-tree.x_hits[0]) / np.sqrt( np.power((tree.x_hits[1]-tree.x_hits[0]),2) + np.power((tree.y_hits[1]-tree.y_hits[0]),2) + np.power((tree.z_hits[1]-tree.z_hits[0]),2)) )
+                    track_length_3D[0]=np.sum(np.array(tree.tracklen_hits))
+                    xhits_og = np.array(x_hits_tr)
+                    yhits_og = np.array(tree.y_hits)
+                    zhits_og = np.array(tree.z_hits)
+                    EDepHit_og = np.array(tree.energyDep_hits)
+                    px[0]= np.array(tree.px_particle)[0]
+                    py[0]= np.array(tree.py_particle)[0]
+                    pz[0]= np.array(tree.pz_particle)[0]
+                    x_vertex[0]= np.array(x_hits_tr)[0]
+                    y_vertex[0]= (np.array(tree.y_vertex_hits)[0]+0.5*opt.y_dim)*opt.y_pix/opt.y_dim
+                    z_vertex[0]= (np.array(tree.z_vertex_hits)[0]+0.5*opt.x_dim)*opt.x_pix/opt.x_dim
+                    x_vertex_end[0]= np.array(x_hits_tr)[-1]
+                    y_vertex_end[0]= (np.array(tree.y_vertex_hits)[-1]+0.5*opt.y_dim)*opt.y_pix/opt.y_dim
+                    z_vertex_end[0]= (np.array(tree.z_vertex_hits)[-1]+0.5*opt.x_dim)*opt.x_pix/opt.x_dim
+                    energy[0]=energy_ini[0]
+                    theta[0]=theta_ini[0]
+                    phi[0]=phi_ini[0]
+                    nhits_og[0]=tree.numhits
+                    
+
+                    outtree.Fill()
+
 
 
                     ## with saturation
@@ -347,9 +418,9 @@ if __name__ == "__main__":
                         # vectorized smearing
                         # if ER file need to swapp X with Z beacuse in geant the drift axis is X
                         if (opt.NR == True):
-                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(tree.x_hits),np.array(tree.y_hits),np.array(tree.z_hits),np.array(tree.energyDep_hits),opt)
+                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(x_hits_tr),np.array(tree.y_hits),np.array(tree.z_hits),np.array(tree.energyDep_hits),opt)
                         else:
-                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(tree.z_hits),np.array(tree.y_hits),np.array(tree.x_hits),np.array(tree.energyDep_hits),opt)
+                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(tree.z_hits),np.array(tree.y_hits),np.array(x_hits_tr),np.array(tree.energyDep_hits),opt)
 
 
                         # if there are no electrons on GEM3, just use empty image 
@@ -439,7 +510,9 @@ if __name__ == "__main__":
 
                     outfile.cd()
                     final_image.Write()            
+                    param_tree.Fill()
 
+                param_tree.Write()
                 outfile.cd('event_info') 
                 outtree.Write()
                 print('COMPLETED RUN %d'%(run_count))
