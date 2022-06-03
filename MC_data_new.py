@@ -167,7 +167,8 @@ def AddBckg(options, i):
             print ('Downloading file: ' + sw.swift_root_file(options.tag, int(options.noiserun)))
             options.tmpname = sw.swift_download_root_file(sw.swift_root_file(options.tag, int(options.noiserun)),int(options.noiserun))
         tmpfile =rt.TFile.Open(options.tmpname)
-        tmphist = tmpfile.Get("pic_run%05d_ev%d"% (int(options.noiserun),i))
+        n_pics = len([k.GetName() for k in tmpfile.GetListOfKeys() if 'pic' in k.GetName()])
+        tmphist = tmpfile.Get("pic_run%05d_ev%d"% (int(options.noiserun),i%n_pics))
         bckg_array = rn.hist2array(tmphist) 
     #print(bckg_array)
     
