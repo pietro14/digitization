@@ -421,7 +421,7 @@ if __name__ == "__main__":
                         if (opt.NR == True):
                             S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(x_hits_tr),np.array(tree.y_hits),np.array(tree.z_hits),np.array(tree.energyDep_hits),opt)
                         else:
-                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(tree.y_hits),np.array(tree.z_hits),np.array(x_hits_tr),np.array(tree.energyDep_hits),opt)
+                            S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(np.array(tree.z_hits),np.array(tree.y_hits),np.array(x_hits_tr),np.array(tree.energyDep_hits),opt)
 
 
                         # if there are no electrons on GEM3, just use empty image 
