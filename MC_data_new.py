@@ -464,8 +464,23 @@ if __name__ == "__main__":
                             array2d_Nph = result_GEM3[1]
                             tot_ph_G3 = np.sum(array2d_Nph)
 
-                            x_n_bin2=round_up_to_even((xmax-xmin)/xbin_dim)
-                            y_n_bin2=round_up_to_even((ymax-ymin)/ybin_dim)
+                            #x_n_bin2=round_up_to_even((xmax-xmin)/xbin_dim)
+                            #y_n_bin2=round_up_to_even((ymax-ymin)/ybin_dim)
+
+                            xmax_bin2=round((xmax)/xbin_dim)+int(opt.x_pix/2)
+                            xmin_bin2=round((xmin)/xbin_dim)+int(opt.x_pix/2)
+                            ymax_bin2=round((ymax)/ybin_dim)+int(opt.y_pix/2)
+                            ymin_bin2=round((ymin)/ybin_dim)+int(opt.y_pix/2)
+                            #print(ymin_bin2)
+                            #print(xmin_bin2)
+                            #print(xmax_bin2)
+                            #print(ymax_bin2)
+
+
+                            x_n_bin2=xmax_bin2-xmin_bin2
+                            y_n_bin2=ymax_bin2-ymin_bin2
+                            #print(x_n_bin2)
+                            #print(y_n_bin2)
 
                             xedges2 = np.linspace(xmin, xmax, num=x_n_bin2)
                             yedges2 = np.linspace(ymin, ymax, num=y_n_bin2)
@@ -477,7 +492,8 @@ if __name__ == "__main__":
                             array2d_Nph = rebin2d(edge[0], edge[1], array2d_Nph, xedges2,  yedges2, interp_kind=3)  
                             array2d_Nph=np.around(array2d_Nph)
 
-                            array2d_Nph=np.pad(array2d_Nph, ( ( int((opt.x_pix-x_n_bin2)/2), int((opt.x_pix-x_n_bin2)/2+1)),  ( int((opt.y_pix-y_n_bin2)/2), int((opt.y_pix-y_n_bin2)/2+1))), 'constant', constant_values=0)   
+                            #array2d_Nph=np.pad(array2d_Nph, ( ( int((opt.x_pix-x_n_bin2)/2), int((opt.x_pix-x_n_bin2)/2+1)),  ( int((opt.y_pix-y_n_bin2)/2), int((opt.y_pix-y_n_bin2)/2+1))), 'constant', constant_values=0)   
+                            array2d_Nph=np.pad(array2d_Nph, ((xmin_bin2+1, opt.x_pix-xmax_bin2 ),  ( ymin_bin2, opt.y_pix-ymax_bin2+1)), 'constant', constant_values=0)   
                            
                         #print("tot num of sensor counts after GEM3 including saturation: %d"%(tot_ph_G3))
                         #print("tot num of sensor counts after GEM3 without saturation: %d"%(opt.A*tot_el_G2*GEM3_gain* omega * opt.photons_per_el * opt.counts_per_photon))
