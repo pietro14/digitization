@@ -12,6 +12,9 @@ from scipy.stats import expon
 from scipy.stats import poisson
 import math
 
+import diplib as dip  # to compiute max and min faster 
+
+
 #sys.path.append("../reconstruction")
 import swiftlib as sw
 
@@ -26,7 +29,7 @@ def NelGM1_vectorized(N_ioniz_el):
         for j in range(0,int(round(N_ioniz_el))):
                 nsec = expon(loc=0,scale=GEM1_gain).rvs()*extraction_eff_GEM1
                 n_el_oneGEM += nsec
-                n_el_oneGEM=N_ioniz_el*0
+                n_el_oneGEM=N_ioniz_el
     else:
         for i, n in enumerate(N_ioniz_el):
             for j in range(0,int(round(N_ioniz_el[i]))):
@@ -85,7 +88,7 @@ def NelGEM2(energyDep,z_hit,options):
         n_el_oneGEM += nsec
 
     # total number of secondary electrons considering the gain in the 2nd GEM foil
-    n_tot_el=n_el_oneGEM*GEM2_gain*extraction_eff_GEM2
+    n_tot_el=n_el_oneGEM*GEM2_gain*extraction_eff_GEM2*options.A
 
     return n_tot_el
 
@@ -138,7 +141,6 @@ def ph_smearing2D(x_hit,y_hit,z_hit,energyDep_hit,options):
 #    return Nph_tot, Nph_array
 
 
-    
 def Nph_saturation_vectorized(histo_cloud,options):
     Nph_array = np.zeros((histo_cloud.shape[0],histo_cloud.shape[1]))
     Nph_tot = 0
@@ -146,15 +148,14 @@ def Nph_saturation_vectorized(histo_cloud,options):
     nel_in=histo_cloud
     hin=(nel_in  * options.A * GEM3_gain)/(1 + options.beta * GEM3_gain  * nel_in) 
     hout=np.sum(hin,axis=(2))
-    nmean_ph= hout * omega * options.photons_per_el * options.counts_per_photon     # mean total number of photons
-    poisson_distr = lambda x: poisson(x).rvs()
-    n_ph=poisson_distr(nmean_ph) 
-    Nph_array=n_ph
-    Nph_tot=np.sum(n_ph)
+    #nmean_ph= hout * omega * options.photons_per_el * options.counts_per_photon     # mean total number of photons
+    #poisson_distr = lambda x: poisson(x).rvs()
+    #n_ph=poisson_distr(nmean_ph) 
+    #Nph_array=n_ph
+    #Nph_tot=np.sum(n_ph)
             
-    return Nph_tot, Nph_array
-
-
+    return hout #Nph_tot, Nph_array
+    
 def AddBckg(options, i):
     bckg_array=np.zeros((options.x_pix,options.y_pix))
     if options.bckg:
@@ -350,6 +351,8 @@ if __name__ == "__main__":
     
                 for entry in range(0, totev): #RUNNING ON ENTRIES
                     tree.GetEntry(entry)
+                    print("Entry %d of %d." % (entry, totev))#, end="\r")
+                    #print("Energy dep: %d" % (tree.energyDep))#, end="\r")
 
 
                     # add random Z to tracks
@@ -370,10 +373,10 @@ if __name__ == "__main__":
                         proj_track_2D[0]=np.sum(np.sqrt(np.power(np.ediff1d(np.array(tree.z_hits)),2)+np.power(np.ediff1d(np.array(tree.y_hits)),2)))
                         energy_ini[0] = tree.ekin_particle[0]*1000
                         particle_type[0] = 0
-                    phi_ini[0] = -999.
-                    theta_ini[0] = -999.
-                    phi_ini[0] = np.arctan2( (tree.y_hits[1]-tree.y_hits[0]),(tree.z_hits[1]-tree.z_hits[0]) )
-                    theta_ini[0] = np.arccos( (tree.x_hits[1]-tree.x_hits[0]) / np.sqrt( np.power((tree.x_hits[1]-tree.x_hits[0]),2) + np.power((tree.y_hits[1]-tree.y_hits[0]),2) + np.power((tree.z_hits[1]-tree.z_hits[0]),2)) )
+                    #phi_ini[0] = -999.
+                    #theta_ini[0] = -999.
+                    #phi_ini[0] = np.arctan2( (tree.y_hits[1]-tree.y_hits[0]),(tree.z_hits[1]-tree.z_hits[0]) )
+                    #theta_ini[0] = np.arccos( (tree.x_hits[1]-tree.x_hits[0]) / np.sqrt( np.power((tree.x_hits[1]-tree.x_hits[0]),2) + np.power((tree.y_hits[1]-tree.y_hits[0]),2) + np.power((tree.z_hits[1]-tree.z_hits[0]),2)) )
                     track_length_3D[0]=np.sum(np.array(tree.tracklen_hits))
                     xhits_og = np.array(x_hits_tr)
                     yhits_og = np.array(tree.y_hits)
@@ -431,73 +434,94 @@ if __name__ == "__main__":
                         # if there are electrons on GEM3, apply saturation effect 
                         else:
 
-                            xmax=max(S3D_x)
-                            xmin=min(S3D_x)
-                            ymax=max(S3D_y)
-                            ymin=min(S3D_y)
-                            zmax=max(S3D_z)
-                            zmin=min(S3D_z)
+                            xmin, xmax = dip.MaximumAndMinimum(S3D_x)   
+                            ymin, ymax = dip.MaximumAndMinimum(S3D_y)
+                            #print(xmin)
+                            #print(xmax)
+                            #print(ymax)
+                            #print(ymin)
+                            #print(opt.x_dim)
 
-                            # numpy histo is faster than ROOT histo
+
+                            zmin, zmax = dip.MaximumAndMinimum(S3D_z)
+                            deltaX=np.absolute(xmax-xmin)
+                            deltaY=np.absolute(ymax-ymin)
+
+                            
+
                             histo_cloud_entries=np.array(
                                     [S3D_x,
                                      S3D_y , 
                                      S3D_z]).transpose()
 
+                            histo_cloud_entries=histo_cloud_entries[histo_cloud_entries[:, 2].argsort()]
+
+
+                            # FIXME: create a function for the saturation loop
+                            max_3Dhisto_volume=1*1e8      # (volume in number of voxels) that's around 0.5*1.6 GB of RAM
+                            deltaZ=max(2*opt.z_vox_dim , opt.z_vox_dim * max_3Dhisto_volume/(deltaX/opt.x_vox_dim)/(deltaY/opt.y_vox_dim))
+                            split_vals=np.arange(zmin, zmax, deltaZ)
+                            split_at = histo_cloud_entries[:, 2].searchsorted(split_vals)
+                            histo_cloud_entries_list = np.split(histo_cloud_entries, split_at)
+
+                            i=0
+
                             xbin_dim=opt.x_vox_dim #opt.x_dim/opt.x_pix
                             ybin_dim=opt.y_vox_dim #opt.y_dim/opt.y_pix
-                            zbin_dim=opt.z_vox_dim
-
 
                             x_n_bin=round_up_to_even((xmax-xmin)/xbin_dim)
                             y_n_bin=round_up_to_even((ymax-ymin)/ybin_dim)
-                            z_n_bin=round_up_to_even((zmax-zmin)/zbin_dim)
 
-                            histo_cloud, edge = np.histogramdd(
-                                    histo_cloud_entries,
-                                    bins=(x_n_bin-1, y_n_bin-1, z_n_bin-1),
-                                    range=([xmin,xmax],[ymin,ymax],[zmin,zmax]),
-                                    normed=None, weights=None, density=None)
-
-                            # apply saturation vectorized function
-                            result_GEM3 = Nph_saturation_vectorized(histo_cloud,opt)   
-                            array2d_Nph = result_GEM3[1]
-                            tot_ph_G3 = np.sum(array2d_Nph)
-
-                            #x_n_bin2=round_up_to_even((xmax-xmin)/xbin_dim)
-                            #y_n_bin2=round_up_to_even((ymax-ymin)/ybin_dim)
-
-                            xmax_bin2=round((xmax)/xbin_dim)+int(opt.x_pix/2)
-                            xmin_bin2=round((xmin)/xbin_dim)+int(opt.x_pix/2)
-                            ymax_bin2=round((ymax)/ybin_dim)+int(opt.y_pix/2)
-                            ymin_bin2=round((ymin)/ybin_dim)+int(opt.y_pix/2)
-                            #print(ymin_bin2)
-                            #print(xmin_bin2)
-                            #print(xmax_bin2)
-                            #print(ymax_bin2)
+                            hout=np.zeros(shape=(x_n_bin-1, y_n_bin-1))
+                            for histo_entries in histo_cloud_entries_list:
+                                if np.size(histo_entries)==0:
+                                            continue
+                                zmin, zmax = dip.MaximumAndMinimum(histo_entries.transpose()[2])
 
 
-                            x_n_bin2=xmax_bin2-xmin_bin2
-                            y_n_bin2=ymax_bin2-ymin_bin2
-                            #print(x_n_bin2)
-                            #print(y_n_bin2)
 
-                            xedges2 = np.linspace(xmin, xmax, num=x_n_bin2)
-                            yedges2 = np.linspace(ymin, ymax, num=y_n_bin2)
+                                zbin_dim=opt.z_vox_dim
 
-                            array2d_Nph=np.around(array2d_Nph)
+                                z_n_bin=max(2,round_up_to_even((zmax-zmin)/zbin_dim))  
 
-                            # for rebinning we are using the code in this repo: https://github.com/jhykes/rebin
-                            # not sure if we have to add an acknowledgement in the README, or do something else to respect the copyright/license 
-                            array2d_Nph = rebin2d(edge[0], edge[1], array2d_Nph, xedges2,  yedges2, interp_kind=3)  
-                            array2d_Nph=np.around(array2d_Nph)
+                                histo_cloud, edge = np.histogramdd(
+                                        histo_entries,
+                                        bins=(x_n_bin-1, y_n_bin-1, z_n_bin-1),
+                                        range=([xmin,xmax],[ymin,ymax],[zmin,zmax]),
+                                        normed=None, weights=None, density=None)
 
-                            #array2d_Nph=np.pad(array2d_Nph, ( ( int((opt.x_pix-x_n_bin2)/2), int((opt.x_pix-x_n_bin2)/2+1)),  ( int((opt.y_pix-y_n_bin2)/2), int((opt.y_pix-y_n_bin2)/2+1))), 'constant', constant_values=0)   
-                            array2d_Nph=np.pad(array2d_Nph, ((xmin_bin2+1, opt.x_pix-xmax_bin2 ),  ( ymin_bin2, opt.y_pix-ymax_bin2+1)), 'constant', constant_values=0)   
-                           
-                        #print("tot num of sensor counts after GEM3 including saturation: %d"%(tot_ph_G3))
-                        #print("tot num of sensor counts after GEM3 without saturation: %d"%(opt.A*tot_el_G2*GEM3_gain* omega * opt.photons_per_el * opt.counts_per_photon))
-                        #print("Gain GEM3 = %f   Gain GEM3 saturated = %f"%(GEM3_gain, tot_ph_G3/(opt.A * tot_el_G2*omega * opt.photons_per_el * opt.counts_per_photon) ))   
+                                
+                                hout=hout+Nph_saturation_vectorized(histo_cloud,opt)   
+
+                                i=i+1
+
+                            hout = hout * omega * opt.photons_per_el * opt.counts_per_photon     # mean total number of photons
+                            poisson_distr = lambda x: poisson(x).rvs()
+                            n_ph=poisson_distr(hout) 
+                            array2d_Nph = n_ph
+                            #print("Shape sat img:", n_ph.shape)
+
+                            # FIXME Write a function padding()
+                            # Define a translation vector
+                            x_center_cloud=int(np.round(((xmax+xmin)/2)/opt.x_vox_dim))
+                            y_center_cloud=int(np.round(((ymax+ymin)/2)/opt.y_vox_dim))
+                            #print("x_center_cloud",x_center_cloud)
+                            #print("y_center_cloud",y_center_cloud)
+                            translation = np.array([x_center_cloud, y_center_cloud])
+                            # Calculate the center position of the original array in the padded array
+                            center = np.array([int(opt.x_pix/2), int(opt.y_pix/2)]) + translation
+                            #print("Center:", center)
+                            # Create the padded array
+                            padded_array = np.zeros((opt.x_pix, opt.y_pix))
+                            x_start = max(0, center[0] - array2d_Nph.shape[0]//2)
+                            y_start = max(0, center[1] - array2d_Nph.shape[1]//2)
+                            x_end = min(opt.x_pix, x_start + array2d_Nph.shape[0])
+                            y_end = min(opt.y_pix, y_start + array2d_Nph.shape[1])
+                            #print("PADDING [%d:%d,%d:%d]" %(x_start, x_end, y_start, y_end))
+                            #print(" ")
+                            padded_array[x_start:x_end, y_start:y_end] = array2d_Nph
+                            array2d_Nph=padded_array
+
 
                     ## no saturation
                     else:
