@@ -1,4 +1,4 @@
-MC_data_gen.py
+MC_data_new.py
 ===============
 This simple script applies both the smearing due to diffusion and the electronic noise background to a MC sample track (GEANT4 output).
 To run, the script need to be in the same location where ConfigFile_new.txt is.
@@ -102,5 +102,6 @@ Work in progress
 ------------
 + Add an option in `ConfigFile.txt` to choose between different detectors and geometries, in order to simulate other setups without manually changing the parameters
 + Parallelize background generation to make the script run faster
-+ Speed up the simulation with saturation effect, maybe with a parametrization (done)
-+ Find a way to apply saturation effect to non-spot tracks (maybe already done)
++ Add an option in `ConfigFile.txt` to set x,y,z offsets
++ Add random z,x,y options
++ Add Vignetting effect
