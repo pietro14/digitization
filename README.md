@@ -5,6 +5,14 @@ To run, the script need to be in the same location where ConfigFile_new.txt is.
 
 The output file is a `.root` file containing all the TH2F histograms generated.
 
+INSTALLATION
+------------
+Install python dependencies using:
+
+> pip install -r requirements.txt
+
+In addition, you will need to have installed [ROOT with python bindings](https://root.cern/install/)
+
 USAGE
 -----
 The usage of the script is the following:
