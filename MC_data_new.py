@@ -376,7 +376,7 @@ if __name__ == "__main__":
 
     for infile in os.listdir(opt.infolder):  # READING INPUT FOLDER
 
-        if infile.endswith("part0.root"):  # KEEPING .ROOT FILES ONLY
+        if infile.endswith(".root"):  # KEEPING .ROOT FILES ONLY
 
             # FIXME
             z_ini = 255.0
