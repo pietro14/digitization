@@ -105,3 +105,11 @@ Work in progress
 + Add an option in `ConfigFile.txt` to set x,y,z offsets
 + Add random z,x,y options
 + Add Vignetting effect
+
+Possible improvements to reduce resource usage
+------------
++ parallelize new saturation loop (speed up)
++ reduce x-y dimension of single layer in saturation loop (save RAM, for oblique tracks)
++ use sparse object for saturation (at the moment the numpy object is taking memory for zeros)
++ use cython to compile code as C and define datatype (int16)
+
