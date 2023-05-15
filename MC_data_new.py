@@ -474,19 +474,23 @@ if __name__ == "__main__":
                     )
                     energy_ini[0] = tree.ekin_particle[0] * 1000
                     particle_type[0] = 0
-                phi_ini[0] = -999.0
-                theta_ini[0] = -999.0
-                phi_ini[0] = np.arctan2(
-                    (tree.y_hits[1] - tree.y_hits[0]), (tree.z_hits[1] - tree.z_hits[0])
-                )
-                theta_ini[0] = np.arccos(
-                    (tree.x_hits[1] - tree.x_hits[0])
-                    / np.sqrt(
-                        np.power((tree.x_hits[1] - tree.x_hits[0]), 2)
-                        + np.power((tree.y_hits[1] - tree.y_hits[0]), 2)
-                        + np.power((tree.z_hits[1] - tree.z_hits[0]), 2)
+
+                # if there are at least 2 hits compute theta_ini and phi_ini
+                if np.size(np.array(tree.x_hits)) > 1:
+                    phi_ini[0] = np.arctan2(
+                        (tree.y_hits[1] - tree.y_hits[0]), (tree.z_hits[1] - tree.z_hits[0])
                     )
-                )
+                    theta_ini[0] = np.arccos(
+                        (tree.x_hits[1] - tree.x_hits[0])
+                        / np.sqrt(
+                            np.power((tree.x_hits[1] - tree.x_hits[0]), 2)
+                            + np.power((tree.y_hits[1] - tree.y_hits[0]), 2)
+                            + np.power((tree.z_hits[1] - tree.z_hits[0]), 2)
+                        )
+                    )
+                else:
+                    phi_ini[0] = -999.0
+                    theta_ini[0] = -999.0
                 track_length_3D[0] = np.sum(np.array(tree.tracklen_hits))
 
                 px[0] = np.array(tree.px_particle)[0]
