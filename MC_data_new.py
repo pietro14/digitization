@@ -177,7 +177,7 @@ def SaveValues(par, out):
     out.cd("param_dir")
 
     for k, v in par.items():
-        if k != "tag" and k != "bckg_path":
+        if k != "tag" and k != "bckg_path" and k != "Vig_Map":
             h = rt.TH1F(k, "", 1, 0, 1)
             h.SetBinContent(1, v)
             h.Write()
@@ -186,6 +186,14 @@ def SaveValues(par, out):
 
 def round_up_to_even(f):
     return math.ceil(f / 2.0) * 2
+
+def TrackVignetting (arrTr,xpix,ypix,VignMap):
+    for i in range(0,ypix):
+        for j in range(0,xpix):
+            if(arrTr[i][j]!=0):
+
+                arrTr[i][j]=round(arrTr[i][j]*VignMap.GetBinContent(VignMap.GetXaxis().FindBin(j),VignMap.GetYaxis().FindBin(i)),0)
+    return arrTr
 
 
 def compute_cmos_with_saturation(x_hits, y_hits, z_hits, e_hits, opt):
@@ -443,6 +451,13 @@ if __name__ == "__main__":
             totev = max_events if opt.events == -1 else opt.events
             totev = min(totev, max_events)
 
+            VignMap=rt.TH2D()
+            if(opt.Vignetting):
+                VignFile=rt.TFile.Open('VignettingMap/'+opt.Vig_Map,'read')
+                VignMap=VignFile.Get("normmap_lime")
+                VignMap.Smooth
+                print(VignMap)
+
             for entry in range(totev):  # RUNNING ON ENTRIES
                 tree.GetEntry(entry)
                 print("Entry %d of %d" % (entry, totev))#, end="\r")
@@ -546,7 +561,10 @@ if __name__ == "__main__":
                     )
 
                 background = AddBckg(opt, entry)
+                if(opt.Vignetting):
+                   array2d_Nph = TrackVignetting(array2d_Nph, opt.y_pix, opt.x_pix, VignMap)
                 total = array2d_Nph + background
+
 
                 final_image = rt.TH2I(
                     "pic_run" + str(run_count) + "_ev" + str(entry),

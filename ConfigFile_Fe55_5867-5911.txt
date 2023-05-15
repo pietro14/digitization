@@ -46,4 +46,7 @@
 
 'randZ_range'           : 0.,        # Track z coordinate range [mm]. Tracks will be generated uniformly between 'z_hit+randZ_range/2' and 'z_hit-randZ_range/2'  
 'absorption_l'          : 1400.,     # absorption lenght in [mm]
+
+'Vignetting'		: False,      #Add vignetting effect according to the MAP
+'Vig_Map'		: "vignette_run04117.root",
 }
