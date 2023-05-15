@@ -11,10 +11,10 @@
 'y_pix'                 : 2304,      # number of pixels in the second dimension
 
 #FIXME
-'x_offset'              : +255.,     # geant4 x offset (x in geant4 is z in digitization)
-'y_offset'              : 0.,        # geant4 y offset
-'z_offset'              : 0.,        # geant4 z offset (z in geant4 is x in digitization)
-'z_gem'                 : +250.,     # GEM z coordinate [mm] (it means an electron generated in z=0 will drift for 250 mm)
+'x_offset'              : -69.,     # geant4 x offset (x in geant4 is z in digitization)
+'y_offset'              : +160.,     # geant4 y offset
+'z_offset'              : -100.,     # geant4 z offset (z in geant4 is x in digitization)
+'z_gem'                 : 250.,      # GEM z coordinate [mm] (it means an electron generated in z=0 will drift for 250 mm)
 'tag'                   : 'Data',    # Set 'Data' to download a real pedestal run 
 'noiserun'              : 5861,      # pedestal run to add as background
 'bckg_path'             : '/tmp/',   # set path to pedestal run, or leave it black if you want to download it

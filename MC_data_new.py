@@ -521,9 +521,9 @@ if __name__ == "__main__":
 
                 outtree.Fill()
 
-                xhits_og = np.array(x_hits_tr)
-                yhits_og = np.array(tree.y_hits)
-                zhits_og = np.array(tree.z_hits)
+                xhits_og = np.array(x_hits_tr) + opt.x_offset
+                yhits_og = np.array(tree.y_hits) + opt.y_offset
+                zhits_og = np.array(tree.z_hits) + opt.z_offset
                 EDepHit_og = np.array(tree.energyDep_hits)
 
                 # if ER file need to swapp X with Z beacuse in geant the drift axis is X
