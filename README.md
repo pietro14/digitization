@@ -66,7 +66,7 @@ To run in batch using PBS queue system you can use the script `submit_digi_batch
 Example command:
 
 ```
-python scripts/submit_digi_batch.py `pwd` --inputdir /nfs/cygno/CYGNO-MC-data/pbs_outputs/CYGNO_60_40_ER_6_keV/ --outdir /nfs/cygno2/users/$USER/digitization-out/ --tag LIMEsaturation_test --conf ConfigFile_new_saturation.txt
+python scripts/submit_digi_batch.py `pwd` --inputdir /nfs/cygno/CYGNO-MC-data/pbs_outputs/CYGNO_60_40_ER_6_keV/ --outdir /nfs/cygno2/users/$USER/digitization-out/ --tag LIMEsaturation_test --conf ConfigFile_new_saturation.txt --ram 8000
 ```
 If you want easily submit multiple jobs, you can use a similar script to `scripts/run_batch.sh` 
 
@@ -74,6 +74,12 @@ You can check the status of the jobs you submitted with:
 
 ```
 qstat | grep $USER
+```
+
+To print the status every 10 seconds, use the following command:
+
+```
+while true; do qstat | grep $USER; date; sleep 10; done
 ```
 
 And you can cancel a job with:

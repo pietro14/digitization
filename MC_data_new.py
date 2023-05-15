@@ -474,19 +474,23 @@ if __name__ == "__main__":
                     )
                     energy_ini[0] = tree.ekin_particle[0] * 1000
                     particle_type[0] = 0
-                phi_ini[0] = -999.0
-                theta_ini[0] = -999.0
-                phi_ini[0] = np.arctan2(
-                    (tree.y_hits[1] - tree.y_hits[0]), (tree.z_hits[1] - tree.z_hits[0])
-                )
-                theta_ini[0] = np.arccos(
-                    (tree.x_hits[1] - tree.x_hits[0])
-                    / np.sqrt(
-                        np.power((tree.x_hits[1] - tree.x_hits[0]), 2)
-                        + np.power((tree.y_hits[1] - tree.y_hits[0]), 2)
-                        + np.power((tree.z_hits[1] - tree.z_hits[0]), 2)
+
+                # if there are at least 2 hits compute theta_ini and phi_ini
+                if np.size(np.array(tree.x_hits)) > 1:
+                    phi_ini[0] = np.arctan2(
+                        (tree.y_hits[1] - tree.y_hits[0]), (tree.z_hits[1] - tree.z_hits[0])
                     )
-                )
+                    theta_ini[0] = np.arccos(
+                        (tree.x_hits[1] - tree.x_hits[0])
+                        / np.sqrt(
+                            np.power((tree.x_hits[1] - tree.x_hits[0]), 2)
+                            + np.power((tree.y_hits[1] - tree.y_hits[0]), 2)
+                            + np.power((tree.z_hits[1] - tree.z_hits[0]), 2)
+                        )
+                    )
+                else:
+                    phi_ini[0] = -999.0
+                    theta_ini[0] = -999.0
                 track_length_3D[0] = np.sum(np.array(tree.tracklen_hits))
 
                 px[0] = np.array(tree.px_particle)[0]
@@ -521,9 +525,9 @@ if __name__ == "__main__":
 
                 outtree.Fill()
 
-                xhits_og = np.array(x_hits_tr)
-                yhits_og = np.array(tree.y_hits)
-                zhits_og = np.array(tree.z_hits)
+                xhits_og = np.array(x_hits_tr) + opt.x_offset
+                yhits_og = np.array(tree.y_hits) + opt.y_offset
+                zhits_og = np.array(tree.z_hits) + opt.z_offset
                 EDepHit_og = np.array(tree.energyDep_hits)
 
                 # if ER file need to swapp X with Z beacuse in geant the drift axis is X
