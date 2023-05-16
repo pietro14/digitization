@@ -462,6 +462,27 @@ if __name__ == "__main__":
                 tree.GetEntry(entry)
                 print("Entry %d of %d" % (entry, totev))#, end="\r")
 
+                if tree.energyDep < opt.ion_pot:
+                    background = AddBckg(opt, entry)
+                    total = background
+                    final_image = rt.TH2I(
+                        "pic_run" + str(run_count) + "_ev" + str(entry),
+                        "",
+                        opt.x_pix,
+                        0,
+                        opt.x_pix - 1,
+                        opt.y_pix,
+                        0,
+                        opt.y_pix - 1,
+                    )  
+                    final_image = rn.array2hist(total, final_image)
+
+                    outfile.cd()
+                    final_image.Write()
+                    param_tree.Fill()
+
+                    continue
+
                 # add random Z to tracks
                 x_hits_tr = tree.x_hits
                 if opt.randZ_range:
