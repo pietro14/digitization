@@ -1,11 +1,10 @@
-import os
+import os,resource,sys
 import math
 import time
 import random
 import optparse
 
 import numpy as np
-import root_numpy as rn
 import ROOT as rt
 from scipy.stats import expon, poisson
 import diplib as dip  # to compiute max and min faster
@@ -14,8 +13,19 @@ import diplib as dip  # to compiute max and min faster
 import swiftlib as sw
 from rebin import rebin2d
 
+import uproot
+import h5py
+
 
 ## FUNCTIONS DEFINITION
+def peak_memory_usage():
+    """Return peak memory usage in MB"""
+    mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    factor_mb = 1 / 1024
+    if sys.platform == "darwin":
+        factor_mb = 1 / (1024 * 1024)
+    return mem * factor_mb
+
 
 
 def NelGM1_vectorized(N_ioniz_el):
@@ -158,14 +168,11 @@ def AddBckg(options, i):
                 sw.swift_root_file(options.tag, int(options.noiserun)),
                 int(options.noiserun),
             )
-        tmpfile = rt.TFile.Open(options.tmpname)
-        n_pics = len(
-            [k.GetName() for k in tmpfile.GetListOfKeys() if "pic" in k.GetName()]
-        )
-        tmphist = tmpfile.Get("pic_run%05d_ev%d" % (int(options.noiserun), i % n_pics))
-        bckg_array = rn.hist2array(tmphist)
-    # print(bckg_array)
-
+        tmpfile = uproot.open(options.tmpname)
+        pics = [k for k in tmpfile.keys() if 'pic' in k]
+        n_pics = len(pics)
+        hist = tmpfile["pic_run%05d_ev%d" % (int(options.noiserun), i % n_pics)]
+        bckg_array = hist.to_numpy()[0]
     return bckg_array
 
 
@@ -187,6 +194,7 @@ def SaveValues(par, out):
 def round_up_to_even(f):
     return math.ceil(f / 2.0) * 2
 
+# FIXME: double for loop, too slow
 def TrackVignetting (arrTr,xpix,ypix,VignMap):
     for i in range(0,ypix):
         for j in range(0,xpix):
@@ -303,14 +311,12 @@ def compute_cmos_without_saturation(x_hits, y_hits, z_hits, e_hits, opt):
         S2DX, S2DY = ph_smearing2D(x, y, z, e, opt)
 
         for sx, sy in zip(S2DX, S2DY):
-            tot_ph_G3 += 1
-
             signal.Fill(
                 (0.5 * opt.x_dim + sx) * opt.x_pix / opt.x_dim,
                 (0.5 * opt.y_dim + sy) * opt.y_pix / opt.y_dim,
             )
-    # print("tot num of sensor counts after GEM3 without saturation: %d"%(tot_ph_G3))
-    return rn.hist2array(signal)
+    # FIXME: use only numpy and not root, probably use a numpy histogram
+    return    np.zeros(2304, 2304) ###############################rn.hist2array(signal)
 
 
 ######################################### MAIN EXECUTION ###########################################
@@ -373,11 +379,11 @@ if __name__ == "__main__":
     if opt.fixed_seed == True:
         np.random.seed(seed=0)
 
-    eventnumber = np.array([-999], dtype="int")
-    particle_type = np.array([-999], dtype="int")
-    energy_ini = np.array([-999], dtype="float32")
-    theta_ini = np.array([-999], dtype="float32")
-    phi_ini = np.array([-999], dtype="float32")
+    #eventnumber = np.array([-999], dtype="int")
+    #particle_type = np.array([-999], dtype="int")
+    #energy_ini = np.array([-999], dtype="float32")
+    #theta_ini = np.array([-999], dtype="float32")
+    #phi_ini = np.array([-999], dtype="float32")
 
     if not os.path.exists(opt.outfolder):  # CREATING OUTPUT FOLDER
         os.makedirs(opt.outfolder)
@@ -392,60 +398,59 @@ if __name__ == "__main__":
             tree = rootfile.Get("nTuple")  # GETTING NTUPLES
 
             infilename = infile[:-5]
-            outfile = rt.TFile(
-                "%s/histograms_Run%05d.root" % (opt.outfolder, run_count), "RECREATE"
-            )  # OUTPUT NAME (only run number)
-            outfile.mkdir("event_info")
-            SaveValues(params, outfile)  ## SAVE PARAMETERS OF THE RUN
-            outtree = rt.TTree("info_tree", "info_tree")
-            outtree.Branch("eventnumber", eventnumber, "eventnumber/I")
-            outtree.Branch("particle_type", particle_type, "particle_type/I")
-            outtree.Branch("energy_ini", energy_ini, "energy_ini/F")
-            outtree.Branch("theta_ini", theta_ini, "theta_ini/F")
-            outtree.Branch("phi_ini", phi_ini, "phi_ini/F")
+            outfile = h5py.File("%s/histograms_Run%05d.h5" % (opt.outfolder, run_count), 'w')
+            #outfile = rt.TFile("%s/histograms_Run%05d.root" % (opt.outfolder, run_count), "RECREATE")  
+            #outfile.mkdir("event_info")
+            #SaveValues(params, outfile)  ## SAVE PARAMETERS OF THE RUN
+            #outtree = rt.TTree("info_tree", "info_tree")
+            #outtree.Branch("eventnumber", eventnumber, "eventnumber/I")
+            #outtree.Branch("particle_type", particle_type, "particle_type/I")
+            #outtree.Branch("energy_ini", energy_ini, "energy_ini/F")
+            #outtree.Branch("theta_ini", theta_ini, "theta_ini/F")
+            #outtree.Branch("phi_ini", phi_ini, "phi_ini/F")
 
             ### saving track lenth##
-            param_tree = rt.TTree("param_tree", "param_tree")  # creating a tree
+            #param_tree = rt.TTree("param_tree", "param_tree")  # creating a tree
 
-            track_length_3D = np.empty((1), dtype="float32")
-            x_vertex = np.empty((1), dtype="float32")
-            y_vertex = np.empty((1), dtype="float32")
-            z_vertex = np.empty((1), dtype="float32")
-            x_vertex_end = np.empty((1), dtype="float32")
-            y_vertex_end = np.empty((1), dtype="float32")
-            z_vertex_end = np.empty((1), dtype="float32")
-            energy = np.empty((1), dtype="float32")
-            px = np.empty((1), dtype="float32")
-            py = np.empty((1), dtype="float32")
-            pz = np.empty((1), dtype="float32")
-            proj_track_2D = np.empty((1), dtype="float32")
-            theta = np.empty((1), dtype="float32")
-            phi = np.empty((1), dtype="float32")
-            nhits_og = np.empty((1), dtype="int32")
-            xhits_og = np.empty((10000), dtype="float32")
-            yhits_og = np.empty((10000), dtype="float32")
-            zhits_og = np.empty((10000), dtype="float32")
-            EDepHit_og = np.empty((10000), dtype="float32")
+            #track_length_3D = np.empty((1), dtype="float32")
+            #x_vertex = np.empty((1), dtype="float32")
+            #y_vertex = np.empty((1), dtype="float32")
+            #z_vertex = np.empty((1), dtype="float32")
+            #x_vertex_end = np.empty((1), dtype="float32")
+            #y_vertex_end = np.empty((1), dtype="float32")
+            #z_vertex_end = np.empty((1), dtype="float32")
+            #energy = np.empty((1), dtype="float32")
+            #px = np.empty((1), dtype="float32")
+            #py = np.empty((1), dtype="float32")
+            #pz = np.empty((1), dtype="float32")
+            #proj_track_2D = np.empty((1), dtype="float32")
+            #theta = np.empty((1), dtype="float32")
+            #phi = np.empty((1), dtype="float32")
+            #nhits_og = np.empty((1), dtype="int32")
+            #xhits_og = np.empty((10000), dtype="float32")
+            #yhits_og = np.empty((10000), dtype="float32")
+            #zhits_og = np.empty((10000), dtype="float32")
+            #EDepHit_og = np.empty((10000), dtype="float32")
 
-            param_tree.Branch("track_length_3D", track_length_3D, "track_length_3D/F")
-            param_tree.Branch("proj_track_2D", proj_track_2D, "proj_track_2D/F")
-            param_tree.Branch("x_vertex", x_vertex, "x_vertex/F")
-            param_tree.Branch("y_vertex", y_vertex, "y_vertex/F")
-            param_tree.Branch("z_vertex", z_vertex, "z_vertex/F")
-            param_tree.Branch("x_vertex_end", x_vertex_end, "x_vertex_end/F")
-            param_tree.Branch("y_vertex_end", y_vertex_end, "y_vertex_end/F")
-            param_tree.Branch("z_vertex_end", z_vertex_end, "z_vertex_end/F")
-            param_tree.Branch("energy", energy, "energy/F")
-            param_tree.Branch("px", px, "px/F")
-            param_tree.Branch("py", py, "py/F")
-            param_tree.Branch("pz", pz, "pz/F")
-            param_tree.Branch("theta", theta, "theta/F")
-            param_tree.Branch("phi", phi, "phi/F")
-            param_tree.Branch("nhits_og", nhits_og, "nhits_og/I")
-            param_tree.Branch("xhits_og", xhits_og, "xhits_og[nhits_og]/F")
-            param_tree.Branch("yhits_og", yhits_og, "yhits_og[nhits_og]/F")
-            param_tree.Branch("zhits_og", zhits_og, "zhits_og[nhits_og]/F")
-            param_tree.Branch("EDepHit_og", EDepHit_og, "EDepHit_og[nhits_og]/F")
+            #param_tree.Branch("track_length_3D", track_length_3D, "track_length_3D/F")
+            #param_tree.Branch("proj_track_2D", proj_track_2D, "proj_track_2D/F")
+            #param_tree.Branch("x_vertex", x_vertex, "x_vertex/F")
+            #param_tree.Branch("y_vertex", y_vertex, "y_vertex/F")
+            #param_tree.Branch("z_vertex", z_vertex, "z_vertex/F")
+            #param_tree.Branch("x_vertex_end", x_vertex_end, "x_vertex_end/F")
+            #param_tree.Branch("y_vertex_end", y_vertex_end, "y_vertex_end/F")
+            #param_tree.Branch("z_vertex_end", z_vertex_end, "z_vertex_end/F")
+            #param_tree.Branch("energy", energy, "energy/F")
+            #param_tree.Branch("px", px, "px/F")
+            #param_tree.Branch("py", py, "py/F")
+            #param_tree.Branch("pz", pz, "pz/F")
+            #param_tree.Branch("theta", theta, "theta/F")
+            #param_tree.Branch("phi", phi, "phi/F")
+            #param_tree.Branch("nhits_og", nhits_og, "nhits_og/I")
+            #param_tree.Branch("xhits_og", xhits_og, "xhits_og[nhits_og]/F")
+            #param_tree.Branch("yhits_og", yhits_og, "yhits_og[nhits_og]/F")
+            #param_tree.Branch("zhits_og", zhits_og, "zhits_og[nhits_og]/F")
+            #param_tree.Branch("EDepHit_og", EDepHit_og, "EDepHit_og[nhits_og]/F")
 
             max_events = tree.GetEntries()
             totev = max_events if opt.events == -1 else opt.events
@@ -464,22 +469,9 @@ if __name__ == "__main__":
 
                 if tree.energyDep < opt.ion_pot:
                     background = AddBckg(opt, entry)
-                    total = background
-                    final_image = rt.TH2I(
-                        "pic_run" + str(run_count) + "_ev" + str(entry),
-                        "",
-                        opt.x_pix,
-                        0,
-                        opt.x_pix - 1,
-                        opt.y_pix,
-                        0,
-                        opt.y_pix - 1,
-                    )  
-                    final_image = rn.array2hist(total, final_image)
 
-                    outfile.cd()
-                    final_image.Write()
-                    param_tree.Fill()
+                    dataset_name = 'pic_run1_ev' + str(entry)
+                    outfile.create_dataset(dataset_name, data=background, compression='gzip')
 
                     continue
 
@@ -490,76 +482,76 @@ if __name__ == "__main__":
                     for ihit in range(0, tree.numhits):
                         x_hits_tr[ihit] += rand
 
-                eventnumber[0] = tree.eventnumber
+                #eventnumber[0] = tree.eventnumber
                 # FIXME
-                if opt.NR == True:
-                    proj_track_2D[0] = np.sum(
-                        np.sqrt(
-                            np.power(np.ediff1d(np.array(tree.x_hits)), 2)
-                            + np.power(np.ediff1d(np.array(tree.y_hits)), 2)
-                        )
-                    )
-                    energy_ini[0] = tree.ekin_particle
-                    particle_type[0] = tree.particle_type
-                else:
-                    proj_track_2D[0] = np.sum(
-                        np.sqrt(
-                            np.power(np.ediff1d(np.array(tree.z_hits)), 2)
-                            + np.power(np.ediff1d(np.array(tree.y_hits)), 2)
-                        )
-                    )
-                    energy_ini[0] = tree.ekin_particle[0] * 1000
-                    particle_type[0] = 0
+                #if opt.NR == True:
+                #    proj_track_2D[0] = np.sum(
+                #        np.sqrt(
+                #            np.power(np.ediff1d(np.array(tree.x_hits)), 2)
+                #            + np.power(np.ediff1d(np.array(tree.y_hits)), 2)
+                #        )
+                #    )
+                #    energy_ini[0] = tree.ekin_particle
+                #    particle_type[0] = tree.particle_type
+                #else:
+                #    proj_track_2D[0] = np.sum(
+                #        np.sqrt(
+                #            np.power(np.ediff1d(np.array(tree.z_hits)), 2)
+                #            + np.power(np.ediff1d(np.array(tree.y_hits)), 2)
+                #        )
+                #    )
+                #    energy_ini[0] = tree.ekin_particle[0] * 1000
+                #    particle_type[0] = 0
 
                 # if there are at least 2 hits compute theta_ini and phi_ini
-                if np.size(np.array(tree.x_hits)) > 1:
-                    phi_ini[0] = np.arctan2(
-                        (tree.y_hits[1] - tree.y_hits[0]), (tree.z_hits[1] - tree.z_hits[0])
-                    )
-                    theta_ini[0] = np.arccos(
-                        (tree.x_hits[1] - tree.x_hits[0])
-                        / np.sqrt(
-                            np.power((tree.x_hits[1] - tree.x_hits[0]), 2)
-                            + np.power((tree.y_hits[1] - tree.y_hits[0]), 2)
-                            + np.power((tree.z_hits[1] - tree.z_hits[0]), 2)
-                        )
-                    )
-                else:
-                    phi_ini[0] = -999.0
-                    theta_ini[0] = -999.0
-                track_length_3D[0] = np.sum(np.array(tree.tracklen_hits))
+                #if np.size(np.array(tree.x_hits)) > 1:
+                #    phi_ini[0] = np.arctan2(
+                #        (tree.y_hits[1] - tree.y_hits[0]), (tree.z_hits[1] - tree.z_hits[0])
+                #    )
+                #    theta_ini[0] = np.arccos(
+                #        (tree.x_hits[1] - tree.x_hits[0])
+                #        / np.sqrt(
+                #            np.power((tree.x_hits[1] - tree.x_hits[0]), 2)
+                #            + np.power((tree.y_hits[1] - tree.y_hits[0]), 2)
+                #            + np.power((tree.z_hits[1] - tree.z_hits[0]), 2)
+                #        )
+                #    )
+                #else:
+                #    phi_ini[0] = -999.0
+                #    theta_ini[0] = -999.0
+                #track_length_3D[0] = np.sum(np.array(tree.tracklen_hits))
 
-                px[0] = np.array(tree.px_particle)[0]
-                py[0] = np.array(tree.py_particle)[0]
-                pz[0] = np.array(tree.pz_particle)[0]
-                x_vertex[0] = np.array(x_hits_tr)[0]
-                y_vertex[0] = (
-                    (np.array(tree.y_vertex_hits)[0] + 0.5 * opt.y_dim)
-                    * opt.y_pix
-                    / opt.y_dim
-                )
-                z_vertex[0] = (
-                    (np.array(tree.z_vertex_hits)[0] + 0.5 * opt.x_dim)
-                    * opt.x_pix
-                    / opt.x_dim
-                )
-                x_vertex_end[0] = np.array(x_hits_tr)[-1]
-                y_vertex_end[0] = (
-                    (np.array(tree.y_vertex_hits)[-1] + 0.5 * opt.y_dim)
-                    * opt.y_pix
-                    / opt.y_dim
-                )
-                z_vertex_end[0] = (
-                    (np.array(tree.z_vertex_hits)[-1] + 0.5 * opt.x_dim)
-                    * opt.x_pix
-                    / opt.x_dim
-                )
-                energy[0] = energy_ini[0]
-                theta[0] = theta_ini[0]
-                phi[0] = phi_ini[0]
-                nhits_og[0] = tree.numhits
+                #px[0] = np.array(tree.px_particle)[0]
+                #py[0] = np.array(tree.py_particle)[0]
+                #pz[0] = np.array(tree.pz_particle)[0]
+                #x_vertex[0] = np.array(x_hits_tr)[0]
+                #y_vertex[0] = (
+                #    (np.array(tree.y_vertex_hits)[0] + 0.5 * opt.y_dim)
+                #    * opt.y_pix
+                #    / opt.y_dim
+                #)
+                #z_vertex[0] = (
+                #    (np.array(tree.z_vertex_hits)[0] + 0.5 * opt.x_dim)
+                #    * opt.x_pix
+                #    / opt.x_dim
+                #)
+                #x_vertex_end[0] = np.array(x_hits_tr)[-1]
+                #y_vertex_end[0] = (
+                #    (np.array(tree.y_vertex_hits)[-1] + 0.5 * opt.y_dim)
+                #    * opt.y_pix
+                #    / opt.y_dim
+                #)
+                #z_vertex_end[0] = (
+                #    (np.array(tree.z_vertex_hits)[-1] + 0.5 * opt.x_dim)
+                #    * opt.x_pix
+                #    / opt.x_dim
+                #)
+                #energy[0] = energy_ini[0]
+                #theta[0] = theta_ini[0]
+                #phi[0] = phi_ini[0]
+                #nhits_og[0] = tree.numhits
 
-                outtree.Fill()
+                #outtree.Fill()
 
                 xhits_og = np.array(x_hits_tr) + opt.x_offset
                 yhits_og = np.array(tree.y_hits) + opt.y_offset
@@ -584,31 +576,17 @@ if __name__ == "__main__":
                 background = AddBckg(opt, entry)
                 if(opt.Vignetting):
                    array2d_Nph = TrackVignetting(array2d_Nph, opt.y_pix, opt.x_pix, VignMap)
-                total = array2d_Nph + background
+                final_image = array2d_Nph + background
+
+                dataset_name = 'pic_run1_ev' + str(entry)
+                outfile.create_dataset(dataset_name, data=final_image, compression='gzip')
+                print("    peak memory: {} MB".format(peak_memory_usage()))
 
 
-                final_image = rt.TH2I(
-                    "pic_run" + str(run_count) + "_ev" + str(entry),
-                    "",
-                    opt.x_pix,
-                    0,
-                    opt.x_pix - 1,
-                    opt.y_pix,
-                    0,
-                    opt.y_pix - 1,
-                )  # smeared track with background
-                final_image = rn.array2hist(total, final_image)
-
-                outfile.cd()
-                final_image.Write()
-                param_tree.Fill()
-
-            param_tree.Write()
-            outfile.cd("event_info")
-            outtree.Write()
             print("COMPLETED RUN %d" % (run_count))
             run_count += 1
-            # outfile.Close()
+
+            outfile.close()
 
     if opt.donotremove == False:
         sw.swift_rm_root_file(opt.tmpname)
