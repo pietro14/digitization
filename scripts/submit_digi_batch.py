@@ -72,7 +72,7 @@ if __name__ == "__main__":
     else:
         queue="cygno-custom"
 
-    sub_cmd = 'qsub -q cygno-custom -l mem={ram}mb -d {dpath} -o localhost:{logf} {jobf}'.format(q=queue,dpath=abswpath,ram=options.RAM,logf=log_file_name,jobf=job_file_name)
+    sub_cmd = 'qsub -q {q} -l mem={ram}mb -d {dpath} -o localhost:{logf} {jobf}'.format(q=queue,dpath=abswpath,ram=options.RAM,logf=log_file_name,jobf=job_file_name)
 
     commands.append(sub_cmd)
 
