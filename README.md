@@ -1,9 +1,17 @@
-MC_data_gen.py
+MC_data_new.py
 ===============
 This simple script applies both the smearing due to diffusion and the electronic noise background to a MC sample track (GEANT4 output).
 To run, the script need to be in the same location where ConfigFile_new.txt is.
 
 The output file is a `.root` file containing all the TH2F histograms generated.
+
+INSTALLATION
+------------
+Install python dependencies using:
+
+> pip install -r requirements.txt
+
+In addition, you will need to have installed [ROOT with python bindings](https://root.cern/install/)
 
 USAGE
 -----
@@ -58,7 +66,7 @@ To run in batch using PBS queue system you can use the script `submit_digi_batch
 Example command:
 
 ```
-python scripts/submit_digi_batch.py `pwd` --inputdir /nfs/cygno/CYGNO-MC-data/pbs_outputs/CYGNO_60_40_ER_6_keV/ --outdir /nfs/cygno2/users/$USER/digitization-out/ --tag LIMEsaturation_test --conf ConfigFile_new_saturation.txt
+python scripts/submit_digi_batch.py `pwd` --inputdir /nfs/cygno/CYGNO-MC-data/pbs_outputs/CYGNO_60_40_ER_6_keV/ --outdir /nfs/cygno2/users/$USER/digitization-out/ --tag LIMEsaturation_test --conf ConfigFile_new_saturation.txt --ram 8000
 ```
 If you want easily submit multiple jobs, you can use a similar script to `scripts/run_batch.sh` 
 
@@ -66,6 +74,12 @@ You can check the status of the jobs you submitted with:
 
 ```
 qstat | grep $USER
+```
+
+To print the status every 10 seconds, use the following command:
+
+```
+while true; do qstat | grep $USER; date; sleep 10; done
 ```
 
 And you can cancel a job with:
@@ -94,5 +108,14 @@ Work in progress
 ------------
 + Add an option in `ConfigFile.txt` to choose between different detectors and geometries, in order to simulate other setups without manually changing the parameters
 + Parallelize background generation to make the script run faster
-+ Speed up the simulation with saturation effect, maybe with a parametrization (done)
-+ Find a way to apply saturation effect to non-spot tracks (maybe already done)
++ Add an option in `ConfigFile.txt` to set x,y,z offsets
++ Add random z,x,y options
++ Add Vignetting effect
+
+Possible improvements to reduce resource usage
+------------
++ parallelize new saturation loop (speed up)
++ reduce x-y dimension of single layer in saturation loop (save RAM, for oblique tracks)
++ use sparse object for saturation (at the moment the numpy object is taking memory for zeros)
++ use cython to compile code as C and define datatype (int16)
+

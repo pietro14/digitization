@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_option(        '--inputdir', dest='inputdir', type="string",       default=None,  help='inputdirectory');
     parser.add_option(        '--config',   dest='config',     type="string",       default=None,  help='config file');
     parser.add_option(        '--tag',      dest='tag',      type="string",       default=None,  help='tag');
+    parser.add_option(        '--ram', dest='RAM', type="int", default=4000, help='RAM');
     #parser.add_option(        '--nthreads', dest='nthreads', type="string", default=24, help='number of threads / job');
     (options, args) = parser.parse_args()
 
@@ -66,13 +67,13 @@ if __name__ == "__main__":
     tmp_file.write(tmp_filecont)
     tmp_file.close()
     
-    RAM=4000
-    #RAM=16000
+    if options.RAM <= 9000:
+        queue="cygno"
+    else:
+        queue="cygno-custom"
 
-    #sub_cmd = 'qsub -q cygno-custom -d {dpath} -l mem={ram}mb -o localhost:{logf} {jobf}'.format(dpath=abswpath,ram=RAM,logf=log_file_name,jobf=job_file_name)
-    sub_cmd = 'qsub -q cygno -l mem={ram}mb -d {dpath} -o localhost:{logf} {jobf}'.format(dpath=abswpath,ram=RAM,logf=log_file_name,jobf=job_file_name)
+    sub_cmd = 'qsub -q {q} -l mem={ram}mb -d {dpath} -o localhost:{logf} {jobf}'.format(q=queue,dpath=abswpath,ram=options.RAM,logf=log_file_name,jobf=job_file_name)
 
-    #sub_cmd = 'qsub -q cygno-custom -l nodes=1:disk5 -d {dpath} -o localhost:{logf} {jobf}'.format(dpath=abswpath,logf=log_file_name,jobf=job_file_name)
     commands.append(sub_cmd)
 
     if options.dryRun:

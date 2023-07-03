@@ -1,0 +1,4 @@
+numpy
+root-numpy
+scipy
+diplib

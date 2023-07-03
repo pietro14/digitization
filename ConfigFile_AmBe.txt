@@ -1,23 +1,23 @@
 {
 ##from https://arxiv.org/pdf/2007.00608.pdf
 'diff_const_sigma0T'    : 0.1225,    # diffusion constant [mm]^2
-'diff_coeff_T'          : 0.01232,   # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
+'diff_coeff_T'          : 0.013225,  # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
 'diff_const_sigma0L'    : 0.0676,    # diffusion constant [mm]^2
 'diff_coeff_L'          : 0.00978,   # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
 
-'x_dim'		        : 346,       # first dimension of the detector
-'y_dim'	            	: 346,       # second dimension of the detector
-'x_pix'		        : 2304,      # number of pixels in the first dimension
-'y_pix'		        : 2304,      # number of pixels in the second dimension
+'x_dim'                 : 346,       # first dimension of the detector
+'y_dim'                 : 346,       # second dimension of the detector
+'x_pix'                 : 2304,      # number of pixels in the first dimension
+'y_pix'                 : 2304,      # number of pixels in the second dimension
 
 #FIXME
-'x_offset'              : +255.,     # geant4 x offset (x in geant4 is z in digitization)
-'y_offset'              : 0.,        # geant4 y offset
-'z_offset'              : 0.,        # geant4 z offset (z in geant4 is x in digitization)
-'z_gem'                 : +250.,     # GEM z coordinate [mm] (it means an electron generated in z=0 will drift for 250 mm)
-'tag'			: 'Data',    # Set 'Data' to download a real pedestal run 
-'noiserun'              : 4432,      # pedestal run to add as background
-'bckg_path'		: '/tmp/',   # set path to pedestal run, or leave it black if you want to download it
+'x_offset'              : -69.,     # geant4 x offset (x in geant4 is z in digitization)
+'y_offset'              : +160.,     # geant4 y offset
+'z_offset'              : -100.,     # geant4 z offset (z in geant4 is x in digitization)
+'z_gem'                 : 250.,      # GEM z coordinate [mm] (it means an electron generated in z=0 will drift for 250 mm)
+'tag'                   : 'Data',    # Set 'Data' to download a real pedestal run 
+'noiserun'              : 5861,      # pedestal run to add as background
+'bckg_path'             : '/tmp/',   # set path to pedestal run, or leave it black if you want to download it
 
 'ion_pot'               : 0.0462,    # ionization potential for He/CF4 60/40 [keV]
 'GEM1_HV'               : 440.,      # HV of GEM1
@@ -26,10 +26,10 @@
 
 # saturation parameters
 'saturation'            : True,      # if 'True' saturation effect is applied on GEM3    
-'x_vox_dim'             : 346./2304.,# x voxel size in [mm]
-'y_vox_dim'             : 346./2304.,# y voxel size in [mm]
+'x_vox_dim'             : 346./2304, # x voxel size in [mm]
+'y_vox_dim'             : 346./2304, # y voxel size in [mm]
 'z_vox_dim'             : 0.1,       # z voxel size in [mm]
-'A'                     : 1.,        # free parameter (total scale factor MC/data) 
+'A'                     : 1.52,      # free parameter (total scale factor MC/data) 
 'beta'                  : 1.0e-5,    # saturation parameter
 
 # optical parameters
@@ -40,12 +40,12 @@
 
 'bckg'                  : True,      # if 'True' background is added
 'NR'                    : False,     # 'True' for NR digitization, 'False' for ER   
-'events'                : 100,       # number of events to be processed, -1 = all
+'events'                : 5,       # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
 'fixed_seed'            : False,     # If 'True' the seed of random distributions is set to 0 (for debugging purposes)
 
 'randZ_range'           : 0.,        # Track z coordinate range [mm]. Tracks will be generated uniformly between 'z_hit+randZ_range/2' and 'z_hit-randZ_range/2'  
-'absorption_l'          : 1000.,     # absorption lenght in [mm]
+'absorption_l'          : 1400.,     # absorption lenght in [mm]
 
 'Vignetting'            : False,      #Add vignetting effect according to the MAP
 'Vig_Map'               : "vignette_run04117.root",

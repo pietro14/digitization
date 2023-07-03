@@ -36,22 +36,22 @@ beta="1.0e-5"
 absorption_l=1000
 
 # example: scan over GEM1_HV
-for GEM1_HV in 440 350 386 406 420 431 440 
+for GEM1_HV in 440 #350 386 406 420 431 440 
 do
 	#example: scan over z_gem
 	for z_gem in 250 
 	do
 
 		#set current input dir
-		inputdir=$(echo "$rootfile_inputdir"/CYGNO_60_40_ER_"$energy"_keV/|tr "." "p")
+		inputdir=$(echo /nfs/cygno2/users/pmeloni/CYGNO/AmBe_input/)
 		#set current output idr 
-		outdir="/nfs/cygno/users/pmeloni/CYGNO/feb22_lug22/digitization-out"
-		tag=$(echo LIMEsaturation_abs"$absorption_l"_beta"$beta"_sT0350_"$z_gem"mm_HV"$GEM1_HV"_pedrun"$noiserun"_"$energy"keV_"$A"A|tr "." "p" | sed 's/e-5//g')
+		outdir="/nfs/cygno2/users/pmeloni/CYGNO/digitization-out/"
+		tag=$(echo AmBe_test)
 
 		conf="config/config_"$tag".txt"
 
 		# creating new config file in ./config dir
-		cp ConfigFile_new.txt "$conf" 
+		cp ConfigFile_AmBe.txt "$conf" 
 
 		# setting parameters in the current config file
 		sed -i 's/'\''z_gem'\'' *\t*: .*/'\'z_gem\'\ :\ 255.+$z_gem\.\,'/'  "$conf"
@@ -73,7 +73,7 @@ do
 		sed -i 's/'\''diff_coeff_L'\''.*/'\'diff_coeff_L\'\ :\ $diff_coeff_L\,'/' "$conf"
 
 		# if you want to submit the jobs 
-		python3 scripts/submit_digi_batch.py `pwd` --inputdir $inputdir --outdir $outdir --tag $tag --conf $conf
+		python3 scripts/submit_digi_batch.py `pwd` --inputdir $inputdir --outdir $outdir --tag $tag --conf $conf --ram 4000
 
 		# if you want to run without submitting to the queue
 		#python MC_data_new.py $conf -I $inputdir -O "$outdir/out/$tag"

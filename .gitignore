@@ -276,3 +276,4 @@ tags
 
 # End of https://www.gitignore.io/api/c++,vim,emacs,python,images
 *.root
+!VignettingMap/*.root
