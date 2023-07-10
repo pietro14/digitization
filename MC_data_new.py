@@ -16,6 +16,10 @@ from rebin import rebin2d
 import uproot
 import h5py
 
+from garfield_data.compute_value_from_csv import compute_value_from_csv
+
+
+
 
 ## FUNCTIONS DEFINITION
 def peak_memory_usage():
@@ -87,9 +91,9 @@ def cloud_smearing3D_vectorized(x_hit, y_hit, z_hit, energyDep_hit, options):
     nel = NelGEM2_vectorized(energyDep_hit, z_hit, options)
 
     dz = np.abs(z_hit - options.z_gem)
-    sigma_x = _compute_sigma(options.diff_const_sigma0T, options.diff_coeff_T, dz)
-    sigma_y = _compute_sigma(options.diff_const_sigma0T, options.diff_coeff_T, dz)
-    sigma_z = _compute_sigma(options.diff_const_sigma0L, options.diff_coeff_L, dz)
+    sigma_x = _compute_sigma(options.diff_const_sigma0T, diff_coeff_T, dz)
+    sigma_y = _compute_sigma(options.diff_const_sigma0T, diff_coeff_T, dz)
+    sigma_z = _compute_sigma(options.diff_const_sigma0L, diff_coeff_L, dz)
 
     X = _smear_vectorized(x_hit, sigma_x, nel)
     Y = _smear_vectorized(y_hit, sigma_y, nel)
@@ -130,7 +134,7 @@ def ph_smearing2D(x_hit, y_hit, z_hit, energyDep_hit, options):
 
     # Support values computed
     dz = np.abs(z_hit - options.z_gem)
-    sigma = _compute_sigma(options.diff_const_sigma0T, options.diff_coeff_T, dz)
+    sigma = _compute_sigma(options.diff_const_sigma0T, diff_coeff_T, dz)
 
     # arrays of positions of produced photons
     X = _smear(x_hit, sigma, nph)
@@ -370,6 +374,13 @@ if __name__ == "__main__":
     a = opt.camera_aperture
     omega = 1.0 / math.pow((4 * (demag + 1) * a), 2)  # solid angle ratio
     # print(omega)
+
+    diff_coeff_T = compute_value_from_csv('./garfield_data/datasets/diff_coeff_T_Renga_HeCF4_60_40.csv', opt.drift_field, 'E[V/cm]','diff_coeff[micron/sqrt(cm)]')
+    diff_coeff_L = compute_value_from_csv('./garfield_data/datasets/diff_coeff_L_Renga_HeCF4_60_40.csv', opt.drift_field, 'E[V/cm]','diff_coeff[micron/sqrt(cm)]')
+    diff_coeff_T = (diff_coeff_T/1000)**2   # conversion to [mm/sqrt(cm)]^2
+    diff_coeff_L = (diff_coeff_L/1000)**2   # conversion to [mm/sqrt(cm)]^2
+
+    drift_vel = compute_value_from_csv('./garfield_data/datasets/drift_velocity_HeCF4_60_40.csv', opt.drift_field/1000, 'E[kV/cm]','drift_velocity[cm/microsec]')
 
     #### CODE EXECUTION ####
     run_count = 1

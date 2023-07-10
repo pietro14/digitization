@@ -1,9 +1,8 @@
 {
-##from https://arxiv.org/pdf/2007.00608.pdf
+## from https://arxiv.org/pdf/2007.00608.pdf
 'diff_const_sigma0T'    : 0.1225,    # diffusion constant [mm]^2
-'diff_coeff_T'          : 0.013225,  # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
 'diff_const_sigma0L'    : 0.0676,    # diffusion constant [mm]^2
-'diff_coeff_L'          : 0.00978,   # diffusion parameter [mm/sqrt(cm)]^2 for 1 kV
+'drift_field'           : 1000,      # drift field [V/cm]
 
 'x_dim'                 : 346,       # first dimension of the detector
 'y_dim'                 : 346,       # second dimension of the detector
