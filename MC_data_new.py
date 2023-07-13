@@ -412,10 +412,10 @@ if __name__ == "__main__":
             infilename = infile[:-5]
 
             #name of output file = digi_<name_of_input_file>
-            outfilename = '{}/digi_{}'.format(opt.outfolder,infile)
+            #outfilename = '{}/digi_{}'.format(opt.outfolder,infile)
 
             #standard: name of output file = histograms_RunRRRRR.root (R run number)
-            #outfilename = "%s/histograms_Run%05d.root" % (opt.outfolder, run_count)
+            outfilename = "%s/histograms_Run%05d.root" % (opt.outfolder, run_count)
 
             ##for radioisotope simulation: histograms_RunZZAAANN.root (Z=atomic number, A=mass numbe$
             ##NOTE: this is a 7 digit run number, while reconstruction currently looks for 5
