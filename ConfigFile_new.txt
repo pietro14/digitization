@@ -11,13 +11,14 @@
 'y_pix'		        : 2304,      # number of pixels in the second dimension
 
 #FIXME
-'x_offset'              : +255.,     # geant4 x offset (x in geant4 is z in digitization)
-'y_offset'              : 0.,        # geant4 y offset
-'z_offset'              : 0.,        # geant4 z offset (z in geant4 is x in digitization)
-'z_gem'                 : +250.,     # GEM z coordinate [mm] (it means an electron generated in z=0 will drift for 250 mm)
+'x_offset'              : 0.,     # x offset [mm] (to center the image along x) 
+'y_offset'              : 0.,        # y offset [mm] (to center the image along y)
+'z_offset'              : -240.,        # z offset (along drift direction - corresponds to coordinate of the farthest point from the GEM)
+'z_gem'                 : +8.,     # GEM z coordinate [mm] (drift distance will be (position in simulation along drift)+(z_offset)-(z_gem) )
 'tag'			: 'Data',    # Set 'Data' to download a real pedestal run 
-'noiserun'              : 4432,      # pedestal run to add as background
-'bckg_path'		: '/tmp/',   # set path to pedestal run, or leave it black if you want to download it
+'noiserun'              : 99992,      # pedestal run to add as background
+'bckg_path'		: '../',   # set path to pedestal run, or leave it black if you want to download it
+'ped_rand'		: True,      # if true, will extract randomly a picture from the background root file (used for run2 MC comparison)
 
 'ion_pot'               : 0.0462,    # ionization potential for He/CF4 60/40 [keV]
 'GEM1_HV'               : 440.,      # HV of GEM1
@@ -40,7 +41,7 @@
 
 'bckg'                  : True,      # if 'True' background is added
 'NR'                    : False,     # 'True' for NR digitization, 'False' for ER   
-'events'                : 100,       # number of events to be processed, -1 = all
+'events'                : 10,       # number of events to be processed, -1 = all
 'donotremove'           : True,      # Remove or not the file from the tmp folder
 'fixed_seed'            : False,     # If 'True' the seed of random distributions is set to 0 (for debugging purposes)
 

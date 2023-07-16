@@ -14,6 +14,7 @@ import diplib as dip  # to compiute max and min faster
 import swiftlib as sw
 from rebin import rebin2d
 
+import csv
 
 ## FUNCTIONS DEFINITION
 
@@ -83,7 +84,7 @@ def cloud_smearing3D_vectorized(x_hit, y_hit, z_hit, energyDep_hit, options):
 
     X = _smear_vectorized(x_hit, sigma_x, nel)
     Y = _smear_vectorized(y_hit, sigma_y, nel)
-    Z = _smear_vectorized(z_hit - z_ini, sigma_z, nel)
+    Z = _smear_vectorized(z_hit, sigma_z, nel)
 
     return X, Y, Z
 
@@ -159,11 +160,16 @@ def AddBckg(options, i):
                 int(options.noiserun),
             )
         tmpfile = rt.TFile.Open(options.tmpname)
-        n_pics = len(
+        if options.ped_rand==True:
+            l = list(tmpfile.GetListOfKeys())
+            tmphist = tmpfile.Get(l[int(random.random()*len(l))].GetName())
+            bckg_array = rn.hist2array(tmphist)
+        else:
+            n_pics = len(
             [k.GetName() for k in tmpfile.GetListOfKeys() if "pic" in k.GetName()]
         )
-        tmphist = tmpfile.Get("pic_run%05d_ev%d" % (int(options.noiserun), i % n_pics))
-        bckg_array = rn.hist2array(tmphist)
+            tmphist = tmpfile.Get("pic_run%05d_ev%d" % (int(options.noiserun), i % n_pics))
+            bckg_array = rn.hist2array(tmphist)
     # print(bckg_array)
 
     return bckg_array
@@ -177,7 +183,7 @@ def SaveValues(par, out):
     out.cd("param_dir")
 
     for k, v in par.items():
-        if k != "tag" and k != "bckg_path" and k != "Vig_Map":
+        if k != "tag" and k != "bckg_path" and k != "Vig_Map" and k != "ped_rand":
             h = rt.TH1F(k, "", 1, 0, 1)
             h.SetBinContent(1, v)
             h.Write()
@@ -197,7 +203,6 @@ def TrackVignetting (arrTr,xpix,ypix,VignMap):
 
 
 def compute_cmos_with_saturation(x_hits, y_hits, z_hits, e_hits, opt):
-
     # vectorized smearing
     S3D_x, S3D_y, S3D_z = cloud_smearing3D_vectorized(
         x_hits, y_hits, z_hits, e_hits, opt
@@ -312,6 +317,13 @@ def compute_cmos_without_saturation(x_hits, y_hits, z_hits, e_hits, opt):
     # print("tot num of sensor counts after GEM3 without saturation: %d"%(tot_ph_G3))
     return rn.hist2array(signal)
 
+def is_NR(array, pdg):
+    index = np.where(array > pdg)[0]
+    if index.size > 0:
+        return array[index[0]]
+    else:
+        return -999
+
 
 ######################################### MAIN EXECUTION ###########################################
 
@@ -335,6 +347,10 @@ if __name__ == "__main__":
         default=os.getcwd() + "/out",
         help="specify the output destination folder",
     )
+
+    parser.add_option("-f", "--inputfile", dest="inputfile", default=None, help="specify the specific file in inputfolder you want to digitize")
+    parser.add_option("-R", "--GEANT4isotopes", dest="GEANT4isotopes", default=False, action='store_true', help="specify if you are digitizing tracks from radioactive isotope GEANT4 simulations")
+
 
     (opt, args) = parser.parse_args()
 
@@ -373,40 +389,51 @@ if __name__ == "__main__":
     if opt.fixed_seed == True:
         np.random.seed(seed=0)
 
-    eventnumber = np.array([-999], dtype="int")
-    particle_type = np.array([-999], dtype="int")
-    energy_ini = np.array([-999], dtype="float32")
-    theta_ini = np.array([-999], dtype="float32")
-    phi_ini = np.array([-999], dtype="float32")
-
     if not os.path.exists(opt.outfolder):  # CREATING OUTPUT FOLDER
         os.makedirs(opt.outfolder)
+
+    dict_isotopes={}
+    if opt.GEANT4isotopes:
+        with open(f'{os.getcwd()}/Z_A_isotopes.csv','r') as data:
+            for line in csv.reader(data):
+                dict_isotopes[line[0]]=int('%05d'%(int(1000*int(line[1])+int(line[2]))))
 
     for infile in os.listdir(opt.infolder):  # READING INPUT FOLDER
 
         if infile.endswith(".root"):  # KEEPING .ROOT FILES ONLY
+            if opt.inputfile:
+                if not opt.inputfile==str(infile): continue       
 
             # FIXME
-            z_ini = 255.0
+
             rootfile = rt.TFile.Open(opt.infolder + "/" + infile)
             tree = rootfile.Get("nTuple")  # GETTING NTUPLES
 
             infilename = infile[:-5]
-            outfile = rt.TFile(
-                "%s/histograms_Run%05d.root" % (opt.outfolder, run_count), "RECREATE"
-            )  # OUTPUT NAME (only run number)
+
+            #name of output file = digi_<name_of_input_file>
+            #outfilename = '{}/digi_{}'.format(opt.outfolder,infile)
+
+            #standard: name of output file = histograms_RunRRRRR.root (R run number)
+            outfilename = "%s/histograms_Run%05d.root" % (opt.outfolder, run_count)
+
+            ##for radioisotope simulation: histograms_RunZZAAANN.root (Z=atomic number, A=mass numbe$
+            ##NOTE: this is a 7 digit run number, while reconstruction currently looks for 5
+            #if opt.GEANT4isotopes and infilename.find('part')>0: 
+            #    outfilename = '%s/histograms_Run%05d%02d.root' % (opt.outfolder,dict_isotopes[str(infile.split("_")[1].split(".")[0])],int(infilename.split('part')[1]))
+            #elif opt.GEANT4isotopes and infilename.find('part')==-1: 
+            #    outfilename='%s/histograms_Run%05d00.root' % (opt.outfolder,dict_isotopes[str(infile.split("_")[1].split(".")[0])])
+
+            outfile = rt.TFile(outfilename, "RECREATE") 
+
             outfile.mkdir("event_info")
             SaveValues(params, outfile)  ## SAVE PARAMETERS OF THE RUN
-            outtree = rt.TTree("info_tree", "info_tree")
-            outtree.Branch("eventnumber", eventnumber, "eventnumber/I")
-            outtree.Branch("particle_type", particle_type, "particle_type/I")
-            outtree.Branch("energy_ini", energy_ini, "energy_ini/F")
-            outtree.Branch("theta_ini", theta_ini, "theta_ini/F")
-            outtree.Branch("phi_ini", phi_ini, "phi_ini/F")
 
-            ### saving track lenth##
-            param_tree = rt.TTree("param_tree", "param_tree")  # creating a tree
-
+            eventnumber = np.array([-999], dtype="int")
+            particle_type = np.array([-999], dtype="int")
+            energy = np.array([-999], dtype="float32")
+            theta = np.array([-999], dtype="float32")
+            phi = np.array([-999], dtype="float32")
             track_length_3D = np.empty((1), dtype="float32")
             x_vertex = np.empty((1), dtype="float32")
             y_vertex = np.empty((1), dtype="float32")
@@ -414,38 +441,52 @@ if __name__ == "__main__":
             x_vertex_end = np.empty((1), dtype="float32")
             y_vertex_end = np.empty((1), dtype="float32")
             z_vertex_end = np.empty((1), dtype="float32")
-            energy = np.empty((1), dtype="float32")
+            x_min = np.empty((1), dtype="float32")
+            x_max = np.empty((1), dtype="float32")
+            y_min = np.empty((1), dtype="float32")
+            y_max = np.empty((1), dtype="float32")
+            z_min = np.empty((1), dtype="float32")
+            z_max = np.empty((1), dtype="float32")
             px = np.empty((1), dtype="float32")
             py = np.empty((1), dtype="float32")
             pz = np.empty((1), dtype="float32")
             proj_track_2D = np.empty((1), dtype="float32")
-            theta = np.empty((1), dtype="float32")
-            phi = np.empty((1), dtype="float32")
             nhits_og = np.empty((1), dtype="int32")
-            xhits_og = np.empty((10000), dtype="float32")
-            yhits_og = np.empty((10000), dtype="float32")
-            zhits_og = np.empty((10000), dtype="float32")
-            EDepHit_og = np.empty((10000), dtype="float32")
+            #xhits_og = np.empty((10000), dtype="float32")
+            #yhits_og = np.empty((10000), dtype="float32")
+            #zhits_og = np.empty((10000), dtype="float32")
+            #EDepHit_og = np.empty((10000), dtype="float32")
+            N_photons = np.empty((1), dtype="int32")
 
-            param_tree.Branch("track_length_3D", track_length_3D, "track_length_3D/F")
-            param_tree.Branch("proj_track_2D", proj_track_2D, "proj_track_2D/F")
-            param_tree.Branch("x_vertex", x_vertex, "x_vertex/F")
-            param_tree.Branch("y_vertex", y_vertex, "y_vertex/F")
-            param_tree.Branch("z_vertex", z_vertex, "z_vertex/F")
-            param_tree.Branch("x_vertex_end", x_vertex_end, "x_vertex_end/F")
-            param_tree.Branch("y_vertex_end", y_vertex_end, "y_vertex_end/F")
-            param_tree.Branch("z_vertex_end", z_vertex_end, "z_vertex_end/F")
-            param_tree.Branch("energy", energy, "energy/F")
-            param_tree.Branch("px", px, "px/F")
-            param_tree.Branch("py", py, "py/F")
-            param_tree.Branch("pz", pz, "pz/F")
-            param_tree.Branch("theta", theta, "theta/F")
-            param_tree.Branch("phi", phi, "phi/F")
-            param_tree.Branch("nhits_og", nhits_og, "nhits_og/I")
-            param_tree.Branch("xhits_og", xhits_og, "xhits_og[nhits_og]/F")
-            param_tree.Branch("yhits_og", yhits_og, "yhits_og[nhits_og]/F")
-            param_tree.Branch("zhits_og", zhits_og, "zhits_og[nhits_og]/F")
-            param_tree.Branch("EDepHit_og", EDepHit_og, "EDepHit_og[nhits_og]/F")
+            outtree = rt.TTree("info_tree", "info_tree")
+            outtree.Branch("eventnumber", eventnumber, "eventnumber/I")
+            outtree.Branch("particle_type", particle_type, "particle_type/I")
+            outtree.Branch("energy", energy, "energy/F")
+            outtree.Branch("theta", theta, "theta/F")
+            outtree.Branch("phi", phi, "phi/F")
+            outtree.Branch("track_length_3D", track_length_3D, "track_length_3D/F")
+            outtree.Branch("proj_track_2D", proj_track_2D, "proj_track_2D/F")
+            outtree.Branch("x_vertex", x_vertex, "x_vertex/F")
+            outtree.Branch("y_vertex", y_vertex, "y_vertex/F")
+            outtree.Branch("z_vertex", z_vertex, "z_vertex/F")
+            outtree.Branch("x_vertex_end", x_vertex_end, "x_vertex_end/F")
+            outtree.Branch("y_vertex_end", y_vertex_end, "y_vertex_end/F")
+            outtree.Branch("z_vertex_end", z_vertex_end, "z_vertex_end/F")
+            outtree.Branch("x_min", x_min, "x_min/F")
+            outtree.Branch("x_max", x_max, "x_max/F")
+            outtree.Branch("y_min", y_min, "y_min/F")
+            outtree.Branch("y_max", y_max, "y_max/F")
+            outtree.Branch("z_min", z_min, "z_min/F")
+            outtree.Branch("z_max", z_max, "z_max/F")
+            outtree.Branch("N_photons", N_photons, "N_photons/I")
+            outtree.Branch("px", px, "px/F")
+            outtree.Branch("py", py, "py/F")
+            outtree.Branch("pz", pz, "pz/F")
+            outtree.Branch("nhits_og", nhits_og, "nhits_og/I")
+            #outtree.Branch("xhits_og", xhits_og, "xhits_og[nhits_og]/F")
+            #outtree.Branch("yhits_og", yhits_og, "yhits_og[nhits_og]/F")
+            #outtree.Branch("zhits_og", zhits_og, "zhits_og[nhits_og]/F")
+            #outtree.Branch("EDepHit_og", EDepHit_og, "EDepHit_og[nhits_og]/F")
 
             max_events = tree.GetEntries()
             totev = max_events if opt.events == -1 else opt.events
@@ -461,7 +502,8 @@ if __name__ == "__main__":
             for entry in range(totev):  # RUNNING ON ENTRIES
                 tree.GetEntry(entry)
                 print("Entry %d of %d" % (entry, totev))#, end="\r")
-
+                print("Energy %d keV" % (int(tree.energyDep)))
+                if tree.energyDep>200: continue
                 if tree.energyDep < opt.ion_pot:
                     background = AddBckg(opt, entry)
                     total = background
@@ -479,108 +521,123 @@ if __name__ == "__main__":
 
                     outfile.cd()
                     final_image.Write()
-                    param_tree.Fill()
+                    outtree.Fill()
 
                     continue
 
+
+                if opt.NR==True:
+                    x_hits_tr = np.array(tree.x_hits) + opt.x_offset
+                    y_hits_tr = np.array(tree.y_hits) + opt.y_offset
+                    z_hits_tr = np.array(tree.z_hits) + opt.z_offset
+                else:
+                    x_hits_tr = np.array(tree.z_hits) + opt.x_offset
+                    y_hits_tr = np.array(tree.y_hits) + opt.y_offset
+                    z_hits_tr = np.array(tree.x_hits) + opt.z_offset
+
                 # add random Z to tracks
-                x_hits_tr = tree.x_hits
                 if opt.randZ_range:
                     rand = (random.random() - 0.5) * (opt.randZ_range)
                     for ihit in range(0, tree.numhits):
-                        x_hits_tr[ihit] += rand
+                        z_hits_tr[ihit] += rand
+
 
                 eventnumber[0] = tree.eventnumber
                 # FIXME
                 if opt.NR == True:
-                    proj_track_2D[0] = np.sum(
-                        np.sqrt(
-                            np.power(np.ediff1d(np.array(tree.x_hits)), 2)
-                            + np.power(np.ediff1d(np.array(tree.y_hits)), 2)
-                        )
-                    )
-                    energy_ini[0] = tree.ekin_particle
+                    energy[0] = tree.ekin_particle
                     particle_type[0] = tree.particle_type
                 else:
-                    proj_track_2D[0] = np.sum(
-                        np.sqrt(
-                            np.power(np.ediff1d(np.array(tree.z_hits)), 2)
-                            + np.power(np.ediff1d(np.array(tree.y_hits)), 2)
-                        )
-                    )
-                    energy_ini[0] = tree.ekin_particle[0] * 1000
-                    particle_type[0] = 0
+                    ##this would be the energy of the primary particle - equal to deposited energy only if it is completely contained in the sensitive volume
+                    #energy[0] = tree.ekin_particle[0] * 1000
+                    energy[0] = tree.energyDep
+                    #particle_type[0] = 0
+                    if tree.energyDep_NR>0: particle_type[0]=is_NR(np.array(tree.pdgID_hits),int(1e9))
+                    else: particle_type[0]=tree.pdgID_hits[0] #this will tell us if the deposit was started by a photon or an electron
 
-                # if there are at least 2 hits compute theta_ini and phi_ini
-                if np.size(np.array(tree.x_hits)) > 1:
-                    phi_ini[0] = np.arctan2(
-                        (tree.y_hits[1] - tree.y_hits[0]), (tree.z_hits[1] - tree.z_hits[0])
+
+                proj_track_2D[0] = np.sum(
+                    np.sqrt(
+                        np.power(np.ediff1d(x_hits_tr), 2)
+                        + np.power(np.ediff1d(y_hits_tr), 2)
                     )
-                    theta_ini[0] = np.arccos(
-                        (tree.x_hits[1] - tree.x_hits[0])
+                )
+
+                # if there are at least 2 hits compute theta and phi
+                if len(x_hits_tr) > 1:
+                    phi[0] = np.arctan2(
+                        (y_hits_tr[1] - y_hits_tr[0]), (x_hits_tr[1] - x_hits_tr[0])
+                    )
+                    theta[0] = np.arccos(
+                        (z_hits_tr[1] - z_hits_tr[0])
                         / np.sqrt(
-                            np.power((tree.x_hits[1] - tree.x_hits[0]), 2)
-                            + np.power((tree.y_hits[1] - tree.y_hits[0]), 2)
-                            + np.power((tree.z_hits[1] - tree.z_hits[0]), 2)
+                            np.power((x_hits_tr[1] - x_hits_tr[0]), 2)
+                            + np.power((y_hits_tr[1] - y_hits_tr[0]), 2)
+                            + np.power((z_hits_tr[1] - z_hits_tr[0]), 2)
                         )
                     )
                 else:
-                    phi_ini[0] = -999.0
-                    theta_ini[0] = -999.0
-                track_length_3D[0] = np.sum(np.array(tree.tracklen_hits))
+                    phi[0] = -999.0
+                    theta[0] = -999.0
 
+                track_length_3D[0] = np.sum(np.array(tree.tracklen_hits))
+                #NOTE: all *_particle branches refer to the primary particle in GEANT4, not the track in the gas
                 px[0] = np.array(tree.px_particle)[0]
                 py[0] = np.array(tree.py_particle)[0]
                 pz[0] = np.array(tree.pz_particle)[0]
-                x_vertex[0] = np.array(x_hits_tr)[0]
+
+                x_vertex[0] = (
+                    (np.array(x_hits_tr)[0] + 0.5 * opt.x_dim)
+                    * opt.x_pix
+                    / opt.x_dim
+                ) #in pixels
                 y_vertex[0] = (
-                    (np.array(tree.y_vertex_hits)[0] + 0.5 * opt.y_dim)
+                    (np.array(y_hits_tr)[0] + 0.5 * opt.y_dim)
                     * opt.y_pix
                     / opt.y_dim
-                )
-                z_vertex[0] = (
-                    (np.array(tree.z_vertex_hits)[0] + 0.5 * opt.x_dim)
+                ) #in pixels
+                z_vertex[0] = abs(np.array(z_hits_tr)[0]-opt.z_gem) #distance from GEMs in mm
+
+                x_vertex_end[0] = (
+                    (np.array(x_hits_tr)[-1] + 0.5 * opt.x_dim)
                     * opt.x_pix
                     / opt.x_dim
-                )
-                x_vertex_end[0] = np.array(x_hits_tr)[-1]
+                ) #in pixels
                 y_vertex_end[0] = (
-                    (np.array(tree.y_vertex_hits)[-1] + 0.5 * opt.y_dim)
+                    (np.array(y_hits_tr)[-1] + 0.5 * opt.y_dim)
                     * opt.y_pix
                     / opt.y_dim
-                )
-                z_vertex_end[0] = (
-                    (np.array(tree.z_vertex_hits)[-1] + 0.5 * opt.x_dim)
-                    * opt.x_pix
-                    / opt.x_dim
-                )
-                energy[0] = energy_ini[0]
-                theta[0] = theta_ini[0]
-                phi[0] = phi_ini[0]
+                ) #in pixels
+                z_vertex_end[0] = abs(np.array(z_hits_tr)[-1]-opt.z_gem) #distance from GEMs in mm
+
+                x_min[0] = (np.min(x_hits_tr) + 0.5*opt.x_dim)*opt.x_pix/opt.x_dim
+                x_max[0] = (np.max(x_hits_tr) + 0.5*opt.x_dim)*opt.x_pix/opt.x_dim
+                y_min[0] = (np.min(y_hits_tr) + 0.5*opt.y_dim)*opt.y_pix/opt.y_dim
+                y_max[0] = (np.max(y_hits_tr) + 0.5*opt.y_dim)*opt.y_pix/opt.y_dim
+                z_min[0] = min(abs(np.max(z_hits_tr) - opt.z_gem),abs(np.min(z_hits_tr) - opt.z_gem))
+                z_max[0] = max(abs(np.max(z_hits_tr) - opt.z_gem),abs(np.min(z_hits_tr) - opt.z_gem))
+
                 nhits_og[0] = tree.numhits
 
-                outtree.Fill()
+                #outtree.Fill()
 
-                xhits_og = np.array(x_hits_tr) + opt.x_offset
-                yhits_og = np.array(tree.y_hits) + opt.y_offset
-                zhits_og = np.array(tree.z_hits) + opt.z_offset
-                EDepHit_og = np.array(tree.energyDep_hits)
-
-                # if ER file need to swapp X with Z beacuse in geant the drift axis is X
-                if opt.NR == False:
-                    xhits_og, zhits_og = zhits_og, xhits_og
+                #xhits_og = np.array(x_hits_tr) + opt.x_offset
+                #yhits_og = np.array(tree.y_hits) + opt.y_offset
+                #zhits_og = np.array(tree.z_hits) + opt.z_offset
+                #EDepHit_og = np.array(tree.energyDep_hits)
 
                 ## with saturation
                 if opt.saturation:
                     array2d_Nph = compute_cmos_with_saturation(
-                        xhits_og, yhits_og, zhits_og, EDepHit_og, opt
+                        x_hits_tr, y_hits_tr, z_hits_tr, np.array(tree.energyDep_hits), opt
                     )
                 ## no saturation
                 else:
                     array2d_Nph = compute_cmos_without_saturation(
-                        xhits_og, yhits_og, zhits_og, EDepHit_og, opt
+                        x_hits_tr, y_hits_tr, z_hits_tr, np.array(tree.energyDep_hits), opt
                     )
 
+                N_photons[0] = np.sum(array2d_Nph)
                 background = AddBckg(opt, entry)
                 if(opt.Vignetting):
                    array2d_Nph = TrackVignetting(array2d_Nph, opt.y_pix, opt.x_pix, VignMap)
@@ -599,11 +656,11 @@ if __name__ == "__main__":
                 )  # smeared track with background
                 final_image = rn.array2hist(total, final_image)
 
+                outtree.Fill()
+
                 outfile.cd()
                 final_image.Write()
-                param_tree.Fill()
 
-            param_tree.Write()
             outfile.cd("event_info")
             outtree.Write()
             print("COMPLETED RUN %d" % (run_count))
