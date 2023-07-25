@@ -18,6 +18,19 @@ import csv
 
 ## FUNCTIONS DEFINITION
 
+def generate_exposure_time_map(exposure_time, options):
+    map = np.zeros((options.x_pix, options.y_pix), dtype=int)
+    T = np.random.uniform(0, exposure_time + 180)
+    if 0 < T < 180:
+        row_threshold = int(T * options.y_pix / 180)
+        map[:row_threshold, :] = 1
+    elif 180 < T < exposure_time:
+        map[:, :] = 1
+    elif exposure_time < T < exposure_time + 180:
+        row_threshold = int((T - (exposure_time)) * options.y_pix / 180)
+        map[row_threshold:, :] = 1
+    return map
+
 
 def NelGM1_vectorized(N_ioniz_el):
     n_el_oneGEM = N_ioniz_el * 0
@@ -641,6 +654,8 @@ if __name__ == "__main__":
                 background = AddBckg(opt, entry)
                 if(opt.Vignetting):
                    array2d_Nph = TrackVignetting(array2d_Nph, opt.y_pix, opt.x_pix, VignMap)
+                if(opt.exposure_time_effect):
+                   array2d_Nph = generate_exposure_time_map(opt.exposure_time, opt) * array2d_Nph  
                 total = array2d_Nph + background
 
 
