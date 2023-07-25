@@ -38,6 +38,9 @@
 'sensor_size'           : 14.976,    # sensor dimension [mm] ORCA Fusion
 'camera_aperture'       : 0.95,
 
+'exposure_time_effect'  : True,      # if True, it simulates the sensor cut on tracks in upper and lower part of sensor
+'exposure_time'         : 300,       # exposure time in milliseconds
+
 'bckg'                  : True,      # if 'True' background is added
 'NR'                    : False,     # 'True' for NR digitization, 'False' for ER   
 'events'                : 5,       # number of events to be processed, -1 = all
