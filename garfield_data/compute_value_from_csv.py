@@ -36,6 +36,17 @@ def compute_value_from_csv(file_path, x, x_column, value_column):
         # Perform linear interpolation
         interpolated_value = lower_value + (x - lower_x) * \
                              (upper_value - lower_value) / (upper_x - lower_x)
-
         return interpolated_value
 
+
+Drift_Field = 500  # V/cm
+Diff_Coeff_T = compute_value_from_csv('./datasets/diff_coeff_T_Renga_HeCF4_60_40.csv', Drift_Field, 'E[V/cm]','diff_coeff[micron/sqrt(cm)]')
+Diff_Coeff_L = compute_value_from_csv('./datasets/diff_coeff_L_Renga_HeCF4_60_40.csv', Drift_Field, 'E[V/cm]','diff_coeff[micron/sqrt(cm)]')
+Diff_Coeff_T = (Diff_Coeff_T/1000)**2   # conversion to [mm/sqrt(cm)]^2
+Diff_Coeff_L = (Diff_Coeff_L/1000)**2   # conversion to [mm/sqrt(cm)]^2
+
+Drift_Vel = compute_value_from_csv('./datasets/drift_velocity_HeCF4_60_40.csv', Drift_Field/1000, 'E[kV/cm]','drift_velocity[cm/microsec]')
+
+print("diff_coeff_T ", Diff_Coeff_T, " [mm/sqrt(cm)]^2")
+print("diff_coeff_L ", Diff_Coeff_L, " [mm/sqrt(cm)]^2")
+print("drif_vel ", Drift_Vel, " [cm/microsec]")
